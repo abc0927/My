@@ -1,0 +1,507 @@
+DOM更新  vuex 路由与组件通信
+2018年11月3日
+15:37
+关于vue的DOM更新问题
+1通过直接更改对象属性或数组项是无法实现表格表单对应数据刷新
+1针对对象
+Obj.prop = value  无法实现，需使用
+Vue.set(obj,'prop',value)
+2针对数组，
+ arr[index] = value 无法实现，需使用
+Vue.set(arr,index,newValue)或者
+Arr.splice(index,1,newValue)
+ 
+使用nextTick
+ 
+1在Vue生命周期的created()钩子函数进行的DOM操作一定要放在Vue.nextTick()的回调函数中 此时回调会发生在mounted之后
+2在数据变化后要执行的某个操作，而这个操作需要使用随数据改变而改变的DOM结构的时候，这个操作都应该放进Vue.nextTick()的回调函数中
+3为了在数据变化之后等待 Vue 完成更新 DOM ，可以在数据变化之后立即使用Vue.nextTick(callback) 。这样回调函数在 DOM 更新完成后就会调用。打开弹窗，调用弹窗dom
+ 
+使用vuex传值三部
+1State:{paramValues 
+2mutations：{
+changeParamValues(state,val){
+state.paramValues = val;
+},
+3this.$store.commit('changeParamValues', this.rulesContent);
+ 
+4在组件中的data变量接受store：count:this.$store.state.count
+5在store中的其他位置引用state变量： state.username
+ 
+路由跳转传参数a跳到b
+1通过vuex传递
+a把要跳转的参数传递到store，b去store里拿这个数据
+2通过路由跳转传参实现
+a组件
+sendParams () {
+        this.$router.push({
+            path: 'yourPath', 
+            name: '要跳转的路径的 name,在 router 文件夹下的 index.js 文件内找',
+            params: { 
+                name: 'name', 
+                dataObj: this.msg
+            }
+            /*query: {
+                name: 'name', 
+                dataObj: this.msg
+            }*/
+        })
+      }
+ 
+b组件
+ methods: {
+      getParams () {
+        // 取到路由带过来的参数 
+        let routerParams = this.$route.params.dataobj
+        // 将数据放在当前组件的数据内
+        this.msg = routerParams
+      }
+    },
+    watch: {
+    // 监测路由变化,只要变化了就调用获取路由参数方法将数据存储本组件即可
+      '$route': 'getParams'
+    }
+ 
+ 
+router传参
+ 
+传递
+this.$router.push({
+  path: "/00",
+  query: {
+     ateName:transferProject.ateName,
+  }
+})
+接收
+最好在created中接受
+mounted(){
+var getQuery  = this.$route.query;
+this.ate_Name = getQuery.ateName.trim();
+}
+ 
+ 
+ 
+ 
+@mouseenter="enter" @mouseleave="leave"
+ 
+钩子函数
+beforeCreate 都拿不到
+created  拿得到this.$data和data数据，拿不到this.$el
+其余钩子都能到所有数据
+ 
+ 
+ 
+组件通信
+ 
+组件传参：
+访问父组件传递的参数 
+this.$parent.$refs.tree_pro.level
+使用this.$parent. 同进入父组件的this
+可以访问到父组件自定义的所有data数据及methods方法等
+$children是数组
+ 
+触发父组件clickHref事件
+this.$emit("clickHref", this.current_navs_index.join("")); 
+ 
+console.log("页面更新都会触发v-show执行内函数执行")
+<i v-show="isEnd(data)" class="el-icon-error" title="此节点不是末节点"></i>
+ 
+ 
+AXIOS
+2018年11月16日
+18:23
+ 
+post请求与调用
+export function submitSequence(model: any,fileId:string,updateBy:string) {
+const path = `${C.paramlibAddr}/api/v1/filetrans/savefile/string/${fileId}/${updateBy}`
+return AXIOS.post(path, model)
+}
+调用：ParamLibOp.updateJsonConfig(
+{"data": this.stringToByte(this.equipJsonConfig)},
+ this.fileIdTemp, 
+this.userId
+).then()
+ 
+get请求与调用
+export function deleteParamApply(id: number) {
+const path = `${C.paramlibAddr}/api/v1/paramapply/deleteParamApply/${id}`
+return AXIOS.get(path);
+}
+ 
+ParamApplyOp.deleteParamApply(otherItem.tableId)
+ 
+export function getParamApply(productName:string,productVersion:string,updatedBy:string,productType: string, productId: string) {
+const path = `${C.paramlibAddr}/api/v1/paramapply/getParamApply/${productName}/${productVersion}/${updatedBy}/${productType}/${productId}`
+return AXIOS.get(path);
+}
+ 
+ParamApplyOp.getParamApply(this.selected.name,this.version_config[0].value,this.userId,this.selected.productType, current).then(
+ 
+export function delBoms(projectName:string,version:string,updatedBy:string,bom:string) {
+const path = `${C.paramlibAddr}/api/v1/paramapply/del/bom?projectName=${projectName}&version=${version}&updatedBy=${updatedBy}&bom=${bom}`
+return AXIOS.get(path);
+}
+ 
+ParamApplyOp.delBoms(this.selected.name,this.version.value,this.userId,this.product_id).then
+ 
+更改请求头
+AXIOS.defaults.headers.post['Content-Type'] = 'application/json';//或者使用对象如下
+export function getSequence(model:any) {
+// const path = `${C.paramlibAddr}/api/v1/sequenceApply/getSequenceInfo`
+const path = `http://10.74.195.122:30072/api/v1/sequenceApply/getSequenceInfo`//苏学奋
+return AXIOS.post(path,model)
+// return AXIOS({
+// method: 'post',
+// url: path,
+// data: model,
+// headers: {"Content-Type":"application/json"}
+// })
+}
+ 
+ 
+ 
+请求本地文件数据
+var url = '/dist/static/OperationHelp.md';
+        Axios.get(url).then(res =>{
+            this.content = res.data;
+            this.$nextTick(()=>{
+                this.init();
+            })
+        })
+接口为get/api/v1/sequenceApply/downloadFile
+参数  /?id=${id}
+ 
+接口
+GET /api/v1/project/getProjectInfo/{productName}
+参数
+/${fileId} 或model
+Request URL
+http://10.57.22.229:30072/api/v1/project/getProjectInfo/SmarX1125-XRRU-2020L
+ 
+script:
+import AXIOS from "axios";
+import {HostConfig as C} from "../config";
+ 
+ 
+Path：
+AXIOS.get(Path).then((re)=>{data=re.data}).catch((err)=>{console.log(err)})
+ 
+ 
+ 
+var _this = this;
+var productName = this.productName;
+const versionPath = `${C.paramlibAddr}/api/v1/project/getVersions/${productName}`;
+AXIOS.get(versionPath)
+          .then(function (response) {
+            // console.log('softwaresData',response.data)
+            _this.versionsList = response.data.reverse();
+            _this.productVersion = _this.versionsList[0];
+            _this.getSoftwaresData(_this.productVersion); //获取最新版本信息和软件清单
+          })
+          .catch(function (err) {
+            console.log(err);
+          });
+ 
+ 
+调试
+2018年11月21日
+11:10
+手动js中打断点
+Debugger
+ 
+右键在隐身窗口中打开
+ 
+ 
+调试过程，
+1 sources找到对应行代码，打断，刷新，F10逐行调试 F8？？
+ 
+后台返回500，查看preview 的message
+ 
+vue文件的断点调试，不是在dist里面的文件
+而是在webpack中的vue文件，函数里面
+ 
+ 
+插件
+2018年11月22日
+14:07
+ 
+Vuex
+Store.js
+import Vue from 'vue';
+import Vuex from 'vuex';
+Vue.use(Vuex)
+const store=new Vuex.Store(
+{
+State:{},
+Getters:{
+Get(state){}
+},
+Mutations:{
+Fn(state,val){}
+},
+Actions:{}
+}
+)
+export default store;
+Main,js
+import store from './store/store.js'
+new Vue({
+router,
+store,
+el: "#v-app",
+render: h => h(App)
+})
+其他组件中
+import store from '../store/store.js'
+userId: this.$store.state.username,
+ 
+Axios
+ 
+import AXIOS from 'axios'
+import { HostConfig as C } from '../config'
+AXIOS.defaults.withCredentials = true;
+export function checkUserLogin(model:any) {
+const path = `${C.paramlibAddr}/api/v1/right/login`
+return AXIOS.post(path,model);
+}
+ 
+ 
+Element-ui
+Main.js
+import Vue from 'vue'
+import ElementUI from 'element-ui'
+import 'element-ui/lib/theme-chalk/index.css';
+Vue.use(ElementUI)
+ 
+ 
+ 
+Bootstrap:
+Main.js
+import 'bootstrap/dist/css/bootstrap.min.css'
+ 
+Vue-router
+Main.js
+import Vue from 'vue'
+import VueRouter from 'vue-router'
+Vue.use(VueRouter)
+const router = new VueRouter({
+routes: [
+ 
+]
+})
+new Vue({
+router,
+store,
+el: "#v-app",
+render: h => h(App)
+})
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+:class="{checkList2:true或false}"
+ 
+给对象添加新的属性并赋值
+obj['newProp'] = value
+如果添加的属性是变量，不用加引号 obj[newProp] = value
+给对象item1增加新对象item2的所有属性
+Object.assign(item1, item2);
+ 
+ 
+项目运行及问题报错
+2018年11月27日
+10:16
+ 
+添加项目插件
+Npm install
+transmitRadio" was assigned to but it has no setter.
+computed: {
+            transmitRadio:{//判断是否可以转审
+                get:function(){
+                    if(this.variableUsers_approvers.length>=1){
+                        return false
+                    }else{
+                        return true
+                    }
+                },
+                set:function(){},
+            },
+ 
+ 
+编译报错
+1. cmd是否已管理员权限运行
+2. npm版本是否足够高，升级使用npm -g update npm@3.10.10
+3. 8080端口是否被占用
+4. 当前操作目录是否在项目根目录
+ 
+查看具体错误信息：
+ 
+lesten eaddrinuse :8080 端口被占用
+ 
+CALL_AND_RETRY Allocation failed - JavaScript heap out of memory
+记录Vue打包或保存频繁内存溢出情况,项目太大，导致内存溢出
+内存溢出 
+配置Nodejs运行内存  "dev": "node --max-old-space-size=4096 build/dev-server.js"
+全局安装increase-memory-limit 执行:  npm install -g increase-memory-limit
+进入工程目录，执行：increase-memory-limit
+ 
+上线了是否还有内存溢出？
+ 
+ 
+语法
+2019年2月11日
+15:16
+ 
+v-loading="loading"
+ 
+ 
+v-for
+v-for="(item ,index) in items" 
+v-for="(value, key, index) in object"
+object:{ name:'name1',k:'k1'} 
+value:name1;key:name;index:0;
+value:k1;key:k;index:1
+把对象每个键值对看做数组元素
+ 
+属性绑定：
+<div :class="['d1',{'d2':isd2}]">div内容</div>
+:style="{height: heightData}"
+ 
+ 
+True和false属性值：
+属性true和false的赋值，必须使用v-bind
+:inline="true"
+ 
+传递Number        :context="10" 
+传递字符        context="10"
+Data 可以定义数据类型：testcontext:Number,
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+<style scope>中的样式
+1仅作用于当前组件
+2仅对自定义元素有效
+3对内部的引用组件整体有效，组件内部无效
+如对dialog整体有效但对dialog的header或body无效
+需要在外面使用单独的style去设置dialog的header和body样式
+<style>中的样式
+1不仅对当前组件有效，而且会作用在其他组件
+ 
+如何对组件内部引用组件设置单独的样式：
+如对某组件内的collapse组件设置header但不让作用于其他组件
+1在style中添加
+2给父级元素添加类名限制
+如：.mark .el-collapse-item_header{}只会作用到mark下面的引用组件header元素
+监听
+深度监听对象内部的属性
+1使用deep:true 深度监听
+2使用computed做中间层，然后浅监听
+ 
+watch: {
+msg: {
+handler(newValue, oldValue) {
+console.log(newValue)
+},
+deep: true
+}
+}
+如果监听对象内的某一具体属性，可以通过computed做中间层来实现
+computed: {
+channel() {
+return this.msg.channel
+}
+},
+watch:{
+channel(newValue, oldValue) {
+console.log('new: %s, old: %s', newval, oldVal)
+}
+}
+ 
+ 
+双向绑定与响应式
+2019年3月12日
+11:30
+ 
+双向绑定与响应式
+发布者-订阅者模式(Backbone.js): 一般通过sub, pub的方式实现数据和视图的绑定监听，更新数据方式通常做法是 vm.set('property', value)。
+数据劫持(Vue.js): 通过Object.defineProperty()来劫持各个属性的setter，getter，在数据变动时发布消息给订阅者，触发相应的监听回调
+ 
+改变一个对象属性将隐式调用getter/setter,再次通知观察者，然后触发重新渲染
+把一个普通 JavaScript 对象传给 Vue 实例的 data 选项，Vue 将遍历此对象所有的属性，并使用 Object.defineProperty 把这些属性全部转为 getter/setter
+Object.defineProperty(person2, 'fullName', {
+    get: function () {
+        return `${this.firstName} ${this.lastName}`;
+    },
+});
+参数介绍:
+第一个参数：目标对象
+第二个参数：需要定义的属性或方法的名字。
+第三个参数：目标属性所拥有的特性。
+ 
+value：属性的值。
+writable：如果为false，属性的值就不能被重写,只能为只读了。
+configurable：总开关，一旦为false，就不能再设置他的（value，writable，configurable）。
+enumerable：是否能在for...in循环中遍历出来或在Object.keys中列举出来。
+get：见下面例子。
+set：见下面例子。
+Object.defineProperty(userInfo, "introduce", {
+    get: function() {
+        return document.getElementById('introduce').innerHTML;
+    },
+    set: function(introduce) {
+        document.getElementById('introduce').innerHTML = introduce;
+    }
+});
+ 
+不能同时设置访问器 (get 和 set) 和 wriable 或 value
+数据属性
+[[Configurable]]:表示能否修改属性。默认值为true
+[[Enumerable]]:表示属性是否可枚举,也就是是否可以通过for-in循环返回属性。默认值为true
+[[Writable]]:表示能否修改属性的值。默认值为true
+[[value]]:包含这个属性的值.读取属性的时候就是通过这里开始读。默认值为undefined
+ 
+访问器属性
+[[Configurable]]：表示能否修改属性。默认值为true
+[[Enumerable]]：表示属性是否可枚举,也就是是否可以通过for-in循环返回属性。默认值为true
+[[Get]]：在读取属性时调用的函数,默认值为undefined
+[[Set]]：在设置属性的时候调用的函数,默认值为undefined

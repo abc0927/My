@@ -1,0 +1,555 @@
+ 
+ 
+ 
+方法
+2019年3月8日
+10:28
+ 
+getUUID: function () { //获取随机UUID
+var d = new Date().getTime();
+var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+var r = (d + Math.random() * 16) % 16 | 0;
+d = Math.floor(d / 16);
+return (c == 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+});
+return uuid;
+},
+ 
+ 
+git
+2019年3月12日
+9:41
+ 
+配置用户：
+git config --global user.name "r00310556"
+git config --global user.email "xiaoming@huawei.com"
+git config -l
+ 
+配置秘钥：生成-添加
+$ ssh-keygen -t rsa -C "xiaoming@huawei.com"
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+http
+2019年3月14日
+16:00
+ 
+状态码：
+200 - 请求成功
+301 - 资源（网页等）被永久转移到其它URL
+404 - 请求的资源（网页等）不存在
+500 - 内部服务器错误
+第一个十进制数字定义了状态码的类型
+1**        信息，服务器收到请求，需要请求者继续执行操作
+2**        成功，操作被成功接收并处理
+3**        重定向，需要进一步的操作以完成请求
+4**        客户端错误，请求包含语法错误或无法完成请求
+5**        服务器错误，服务器在处理请求的过程中发生了错误
+ 
+ 
+Content-Type，内容类型，一般是指网页中存在的Content-Type，用于定义网络文件的类型和网页的编码，决定浏览器将以什么形式、什么编码读取这个文件，这就是经常看到一些Asp网页点击的结果却是下载到的一个文件或一张图片的原因。
+响应头：
+ 
+Allow	服务器支持哪些请求方法（如GET、POST等）。
+Content-Encoding	文档的编码（Encode）方法。只有在解码之后才可以得到Content-Type头指定的内容类型。利用gzip压 缩文档能够显著地减少HTML文档的下载时间。Java的GZIPOutputStream可以很方便地进行gzip压缩，但只有Unix上的 Netscape和Windows上的IE 4、IE 5才支持它。因此，Servlet应该通过查看Accept-Encoding头（即request.getHeader("Accept- Encoding")）检查浏览器是否支持gzip，为支持gzip的浏览器返回经gzip压缩的HTML页面，为其他浏览器返回普通页面。
+Content-Length	表示内容长度。只有当浏览器使用持久HTTP连接时才需要这个数据。如果你想要利用持久连接的优势，可以把输出文档写入 ByteArrayOutputStram，完成后查看其大小，然后把该值放入Content-Length头，最后通过 byteArrayStream.writeTo(response.getOutputStream()发送内容。
+Content-Type	表示后面的文档属于什么MIME类型。Servlet默认为text/plain，但通常需要显式地指定为text/html。由于经常要设置Content-Type，因此HttpServletResponse提供了一个专用的方法setContentType。 
+Date	当前的GMT时间。你可以用setDateHeader来设置这个头以避免转换时间格式的麻烦。
+Expires	应该在什么时候认为文档已经过期，从而不再缓存它？
+Last-Modified	文档的最后改动时间。客户可以通过If-Modified-Since请求头提供一个日期，该请求将被视为一个条件 GET，只有改动时间迟于指定时间的文档才会返回，否则返回一个304（Not Modified）状态。Last-Modified也可用setDateHeader方法来设置。
+Location	表示客户应当到哪里去提取文档。Location通常不是直接设置的，而是通过HttpServletResponse的sendRedirect方法，该方法同时设置状态代码为302。
+Refresh	表示浏览器应该在多少时间之后刷新文档，以秒计。除了刷新当前文档之外，你还可以通过setHeader("Refresh", "5; URL=http://host/path")让浏览器读取指定的页面。 
+注 意这种功能通常是通过设置HTML页面HEAD区的＜META HTTP-EQUIV="Refresh" CONTENT="5;URL=http://host/path"＞实现，这是因为，自动刷新或重定向对于那些不能使用CGI或Servlet的 HTML编写者十分重要。但是，对于Servlet来说，直接设置Refresh头更加方便。 
+ 
+注意Refresh的意义是"N秒之后刷 新本页面或访问指定页面"，而不是"每隔N秒刷新本页面或访问指定页面"。因此，连续刷新要求每次都发送一个Refresh头，而发送204状态代码则可 以阻止浏览器继续刷新，不管是使用Refresh头还是＜META HTTP-EQUIV="Refresh" ...＞。 
+ 
+注意Refresh头不属于HTTP 1.1正式规范的一部分，而是一个扩展，但Netscape和IE都支持它。
+Server	服务器名字。Servlet一般不设置这个值，而是由Web服务器自己设置。
+Set-Cookie	设置和页面关联的Cookie。Servlet不应使用response.setHeader("Set-Cookie", ...)，而是应使用HttpServletResponse提供的专用方法addCookie。参见下文有关Cookie设置的讨论。
+WWW-Authenticate	客户应该在Authorization头中提供什么类型的授权信息？在包含401（Unauthorized）状态行的 应答中这个头是必需的。例如，response.setHeader("WWW-Authenticate", "BASIC realm=＼"executives＼"")。 
+注意Servlet一般不进行这方面的处理，而是让Web服务器的专门机制来控制受密码保护页面的访问（例如.htaccess）。
+ 
+来自 <https://www.w3cschool.cn/http/6hafgfmw.html> 
+ 
+ 
+网络通信
+2019年2月25日
+11:17
+ 
+同源策略与跨域
+1、先来说说什么是源
+• 源（origin）就是协议、域名和端口号。
+以上url中的源就是：http://www.company.com:80
+若地址里面的协议、域名和端口号均相同则属于同源。
+以下是相对于 http://www.a.com/test/index.html 的同源检测
+• http://www.a.com/dir/page.html ----成功
+• http://www.child.a.com/test/index.html ----失败，域名不同
+• https://www.a.com/test/index.html ----失败，协议不同
+• http://www.a.com:8080/test/index.html ----失败，端口号不同
+2.什么是同源策略？
+同源策略是浏览器的一个安全功能，不同源的客户端脚本在没有明确授权的情况下，不能读写对方资源。所以a.com下的js脚本采用ajax读取b.com里面的文件数据是会报错的。
+• 不受同源策略限制的：
+1、页面中的链接，重定向以及表单提交是不会受到同源策略限制的。
+2、跨域资源的引入是可以的。但是js不能读写加载的内容。如嵌入到页面中的<script src="..."></script>，<img>，<link>，<iframe>等。
+二、跨域
+1、什么是跨域
+受前面所讲的浏览器同源策略的影响，不是同源的脚本不能操作其他源下面的对象。想要操作另一个源下的对象是就需要跨域。
+ 
+2、跨域的实现形式
+ 
+降域 document.domain
+JSONP跨域
+CORS
+其他方法：
+1. HTML5的postMessage方法
+2. window.name
+3. location.hash
+ 
+ 
+ 
+ 
+ 
+CORS:
+ 
+CORS是一个W3C标准，全称是"跨域资源共享"（Cross-origin resource sharing）。
+ 
+它允许浏览器向跨源服务器，发出XMLHttpRequest请求，从而克服了AJAX只能同源使用的限制。
+ 
+实现CORS通信的关键是服务器
+ 
+简单请求：
+上面的头信息之中，有三个与CORS请求相关的字段，都以Access-Control-开头。
+ 
+（1）Access-Control-Allow-Origin
+ 
+该字段是必须的。它的值要么是请求时Origin字段的值，要么是一个*，表示接受任意域名的请求。
+ 
+（2）Access-Control-Allow-Credentials
+ 
+该字段可选。它的值是一个布尔值，表示是否允许发送Cookie。默认情况下，Cookie不包括在CORS请求之中。设为true，即表示服务器明确许可，Cookie可以包含在请求中，一起发给服务器。这个值也只能设为true，如果服务器不要浏览器发送Cookie，删除该字段即可。
+ 
+（3）Access-Control-Expose-Headers
+ 
+该字段可选。CORS请求时，XMLHttpRequest对象的getResponseHeader()方法只能拿到6个基本字段：Cache-Control、Content-Language、Content-Type、Expires、Last-Modified、Pragma。如果想拿到其他字段，就必须在Access-Control-Expose-Headers里面指定。上面的例子指定，getResponseHeader('FooBar')可以返回FooBar字段的值。
+ 
+CORS请求默认不发送Cookie和HTTP认证信息。如果要把Cookie发到服务器，一方面要服务器同意，指定Access-Control-Allow-Credentials字段。
+Access-Control-Allow-Credentials: true
+另一方面，开发者必须在AJAX请求中打开withCredentials属性。
+var xhr = new XMLHttpRequest();
+xhr.withCredentials = true;
+如果要发送Cookie，Access-Control-Allow-Origin就不能设为星号，必须指定明确的、与请求网页一致的域名。同时，Cookie依然遵循同源政策，只有用服务器域名设置的Cookie才会上传，其他域名的Cookie并不会上传，且（跨源）原网页代码中的document.cookie也无法读取服务器域名下的Cookie
+ 
+ 
+非简单请求
+非简单请求是那种对服务器有特殊要求的请求
+预检请求
+ 
+var url = 'http://api.alice.com/cors';
+var xhr = new XMLHttpRequest();
+xhr.open('PUT', url, true);
+xhr.setRequestHeader('X-Custom-Header', 'value');
+xhr.send();
+除了Origin字段，"预检"请求的头信息包括两个特殊字段。
+ 
+（1）Access-Control-Request-Method
+ 
+该字段是必须的，用来列出浏览器的CORS请求会用到哪些HTTP方法，上例是PUT。
+ 
+（2）Access-Control-Request-Headers
+ 
+该字段是一个逗号分隔的字符串，指定浏览器CORS请求会额外发送的头信息字段，上例是X-Custom-Header。
+ 
+服务器收到"预检"请求以后，检查了Origin、Access-Control-Request-Method和Access-Control-Request-Headers字段以后，确认允许跨源请求，就可以做出回应
+ 
+（1）Access-Control-Allow-Methods
+ 
+该字段必需，它的值是逗号分隔的一个字符串，表明服务器支持的所有跨域请求的方法。注意，返回的是所有支持的方法，而不单是浏览器请求的那个方法。这是为了避免多次"预检"请求。
+ 
+（2）Access-Control-Allow-Headers
+ 
+如果浏览器请求包括Access-Control-Request-Headers字段，则Access-Control-Allow-Headers字段是必需的。它也是一个逗号分隔的字符串，表明服务器支持的所有头信息字段，不限于浏览器在"预检"中请求的字段。
+ 
+（3）Access-Control-Allow-Credentials
+ 
+该字段与简单请求时的含义相同。
+ 
+（4）Access-Control-Max-Age
+ 
+该字段可选，用来指定本次预检请求的有效期，单位为秒。上面结果中，有效期是20天（1728000秒），即允许缓存该条回应1728000秒（即20天），在此期间，不用发出另一条预检请求。
+一旦服务器通过了"预检"请求，以后每次浏览器正常的CORS请求，就都跟简单请求一样
+ 
+JSONP只支持GET请求，CORS支持所有类型的HTTP请求。JSONP的优势在于支持老式浏览器，以及可以向不支持CORS的网站请求数据。
+ 
+ 
+ 
+ 
+ MediaType，即是Internet Media Type，互联网媒体类型；也叫做MIME类型，在Http协议消息头中，使用Content-Type来表示具体请求中的媒体类型信息。
+Content-Type是返回消息中非常重要的内容，表示后面的文档属于什么MIME类型，用于定义网络文件的类型和网页的编码，决定浏览器将以什么形式、什么编码读取这个文件
+ 
+Xhr = new XMLHttpRequest()
+ 
+事件：
+onreadystatechange
+Ontimeout 超时事件
+ 
+方法：
+Open
+setRequestHeader
+overrideMimeType("text/xml") 重写响应MIME类型
+Send
+Abort
+getResponseHeader
+getAllResponseHeaders
+ 
+属性
+Status
+readyState
+statusText
+responseText
+responseXML
+Timeout 超时设定毫秒
+ 
+ 
+Url: 
+1.	查询字符串已?开始，已&连接，每个键值对使用encodeURIComponent()编码
+formData
+Var data = new FormData(document.getElementById("user-info")
+Data.append("name","xiaozhang")
+Xhr.send(data)
+ 
+ 
+websocket
+2019年2月25日
+17:13
+ 
+creatwebsocker() {
+                var socket;
+                if (typeof (WebSocket) == "undefined") {
+                    console.log("您的浏览器不支持WebSocket");
+                } else {
+                    console.log("您的浏览器支持WebSocket");
+                    //实现化WebSocket对象，指定要连接的服务器地址与端口  建立连接  
+                    //等同于socket = new WebSocket("ws://localhost:8083/checkcentersys/websocket/20");  
+                    socket = new WebSocket("${basePath}websocket/${cid}".replace("http", "ws"));
+                    //打开事件  
+                    socket.onopen = function () {
+                        console.log("Socket 已打开");
+                        //socket.send("这是来自客户端的消息" + location.href + new Date());  
+                    };
+                    //获得消息事件  
+                    socket.onmessage = function (msg) {
+                        console.log(msg.data);
+                        //发现消息进入    开始处理前端触发逻辑
+                    };
+                    //关闭事件  
+                    socket.onclose = function () {
+                        console.log("Socket已关闭");
+                    };
+                    //发生了错误事件  
+                    socket.onerror = function () {
+                        alert("Socket发生了错误");
+                        //此时可以尝试刷新页面
+                    }
+                    //离开页面时，关闭socket
+                    //jquery1.8中已经被废弃，3.0中已经移除
+                    // $(window).unload(function(){  
+                    //     socket.close();  
+                    //});  
+                }
+            }
+ 
+WebSocket 客户端
+在客户端，没有必要为 WebSockets 使用 JavaScript 库。实现 WebSockets 的 Web 浏览器将通过 WebSockets 对象公开所有必需的客户端功能（主要指支持 Html5 的浏览器）。
+ 
+客户端 API
+以下 API 用于创建 WebSocket 对象。
+ 
+var Socket = new WebSocket(url, [protocol] );
+以上代码中的第一个参数 url, 指定连接的 URL。第二个参数 protocol 是可选的，指定了可接受的子协议。
+ 
+WebSocket 属性
+以下是 WebSocket 对象的属性。假定我们使用了以上代码创建了 Socket 对象：
+ 
+属性        描述
+Socket.readyState        只读属性 readyState 表示连接状态，可以是以下值：0 - 表示连接尚未建立。1 - 表示连接已建立，可以进行通信。2 - 表示连接正在进行关闭。3 - 表示连接已经关闭或者连接不能打开。
+Socket.bufferedAmount        只读属性 bufferedAmount 已被 send() 放入正在队列中等待传输，但是还没有发出的 UTF-8 文本字节数。
+ 
+WebSocket 事件
+以下是 WebSocket 对象的相关事件。假定我们使用了以上代码创建了 Socket 对象：
+ 
+事件        事件处理程序        描述
+open        Socket.onopen        连接建立时触发
+message        Socket.onmessage        客户端接收服务端数据时触发
+error        Socket.onerror        通信发生错误时触发
+close        Socket.onclose        连接关闭时触发
+ 
+WebSocket 方法
+以下是 WebSocket 对象的相关方法。假定我们使用了以上代码创建了 Socket 对象：
+ 
+方法        描述
+Socket.send()        使用连接发送数据
+Socket.close()        关闭连接
+ 
+ 
+ 
+Test.vue
+ 
+<template>
+    <div>
+        <p>表1</p>
+        <el-table :data="tableData1">
+            <el-table-column label="flowId" prop="flowId"></el-table-column>
+            <el-table-column label="说明" prop="description"></el-table-column>
+        </el-table>
+        <p>表2</p>
+        <el-table :data="tableData2">
+            <el-table-column label="flowId" prop="flowId"></el-table-column>
+            <el-table-column label="说明" prop="description"></el-table-column>
+        </el-table>
+        <el-button @click="closeAllWebsocket">关闭连接</el-button>
+        <el-button @click="openAllWebsocket">开启连接</el-button>
+    </div>
+</template>
+<script>
+import {HostConfig as C} from "../config";
+import Vue from 'vue'
+ 
+    export default {
+        name: "component_name",
+        data() {
+            return {
+                tableData1:[{flowId:11},{flowId:12},{flowId:13},{flowId:13}],
+                tableData2:[{flowId:11},{flowId:122},{flowId:13},{flowId:14}],
+                websock:null,
+            };
+        },
+        created(){
+            this.creatwebsocker();
+        },
+        methods: {
+            creatwebsocker() {
+                var socket;
+                if (typeof (WebSocket) == "undefined") {
+                    console.log("您的浏览器不支持WebSocket");
+                } else {
+                    console.log("您的浏览器支持WebSocket");
+                    //实现化WebSocket对象，指定要连接的服务器地址与端口  建立连接  
+                    this.tableData1.forEach(item=>{
+                        let flowId = item.flowId
+                        item.wk = new WebSocket(`${C.paramlibAddr}/websocket/${flowId}`.replace("http", "ws"))
+                        item.wk.onmessage = (e)=>{
+                            console.log('有消息传递过来1')
+                            Vue.set(item,'description',e.data)
+                        }
+                        item.wk.onclose = ()=>{
+                            console.log(flowId + "连接关闭")
+                        }
+                        item.wk.onopen = this.websocketonopen;
+                        item.wk.onerror = this.websocketonerror;
+                    })
+                    this.tableData2.forEach(item=>{
+                        let flowId = item.flowId
+                        item.wk = new WebSocket(`${C.paramlibAddr}/websocket/${flowId}`.replace("http", "ws"))
+                        item.wk.onmessage = (e)=>{
+                            console.log('有消息传递过来2')
+                            this.tableData1.forEach(i1=>{
+                                if(i1.flowId == item.flowId){
+                                     Vue.set(i1,'description',e.data)
+                                }
+                            })
+                            this.tableData2.forEach(i2=>{
+                                if(i2.flowId == item.flowId){
+                                     Vue.set(i2,'description',e.data)
+                                }
+                            })
+                        }
+                        item.wk.onopen = this.websocketonopen;
+                        item.wk.onerror = this.websocketonerror;
+                        item.wk.onclose = ()=>{
+                            console.log(flowId + "连接关闭")
+                        }
+                    })
+                    //相同的连接只有最后一个连接触发onmessage事件
+                    //相同的连接每个连接都会触发open、close事件
+                    //离开页面时，关闭socket：socket.close();  
+                }
+            },
+            closeAllWebsocket(){
+                this.tableData1.forEach(item=>{
+                    item.wk.close()
+                })
+                this.tableData2.forEach(item=>{
+                    item.wk.close()
+                })
+            },
+            openAllWebsocket(){
+                this.creatwebsocker()
+            },
+            websocketonopen: function () {
+                console.log("WebSocket连接成功");
+            },
+            websocketonerror: function (e) {
+                console.log("WebSocket连接发生错误");
+            },
+            websocketonmessage: function (e) {
+                var da = e.data;
+                console.log(da);
+            },
+            websocketclose: function (e) {
+                console.log("connection closed (" + e.code + ")");
+            },
+        }
+    }
+</script>
+<style scoped>
+</style>
+ 
+项目实例：
+目的:1针对的未完成流程进行流程说明事实观测2获取待办数量，取消定时器的使用
+问题：
+1不在登录页面都需要连接获取待办数量变化监控：登录后连接，注销后断开
+2刷新切换页面导致连接断开的处理：登录后建立连接，注销后关闭连接，在路由验证的地方，判断是否有连接？
+3如果错过了一次流程推送怎么办？关闭了连接或者关闭了网页，所以推送的内容应该是更新的东西，而不是新添加，重新进入页面即使没有推送，都会重新拉取数据，获取最新信息
+4如果是开两个窗口，建立了两个连接，或多个终端，只有最后一个连接会接收到推送，关闭最后一个，其他的接受不到推送,解决：连接路径添加当前毫秒
+a用户t以 t1 t2 t3 建立了三个连接，这三个连接可以同时接收到相同推送数据，
+b变量名建立的连接不会被覆盖，不同网页是独立的
+5推送的数据使用store接受，在应用组件监控store数据变化渲染页面（组件监控store数据要使用computed接收，用到监控所以传递数据类型使用字符串避免深度监听的麻烦）
+a组件在推送的消息有变化执行：通过监控computed中的变量：websocketmessage(){return this.$store.state.websocketMessage} 
+b组件在推送消息即使没有变化也执行：store添加毫秒变量t，推送发生，更改毫秒变量t，组件监控computed的store毫秒变化，执行函数，参数还是computed中的变量
+6监控待办审批数： 在header的created中获取一次待办数量(刷新页面没有推送的情况下获得待办数)，然后在store中如果有推送在获取一次待办数量（实时更新）
+7监控版本变化：定时器 refreshVersionConfig    versionIsChang   versionInterval  推送        websocketonmessage 
+主审审批后会有subjectName 测试审批后也会有subjectName  怎么判断是否有新版本？
+有新版本的推送给谁？每个人？ 暂时取消用推送的方法提示版本更新
+8自动重连问题(未实现)
+9流程（需要发推送的情况）
+a流程处理人应该收到推送
+b流程发起人在进程有变化时应该收到推送
+创建人创建后主审人会受到推送
+主审审批后测试人员没有收到推送
+主审审批后申请人员会受到推送，测试审批后申请人会受到推送
+ 
+结合路由建立与断开websocket代码实现 app.js
+ 
+var websocket = null
+router.beforeEach((to, from, next) => {
+  if (to.matched.some(m => m.meta.auth)) {//to对象{name:,meta:,matched:[],path:'',query:{}}
+    console.log("to:", to.fullPath)
+    //对路由进行验证是否已登录
+    var temp = getCookie("LAST_USER");
+    if (temp) {
+      store.state.islogin = true;
+      store.state.username = temp;
+      //正常跳转到设置好的页面
+      next()
+      //判断是否有websocket连接，如果没有进行连接
+      if(!websocket){
+        let websocketId = temp;
+        let timestamp=new Date().getTime()
+        let id = websocketId + timestamp
+        const url = `${C.paramlibAddr}/websocket/${id}`
+        websocket = new WebSocket(url.replace("http", "ws"));
+        websocket.onopen = ()=>{
+          console.log("使用" + id + "连接到websocket")
+        }
+        websocket.onmessage = (r)=>{
+          store.commit("websocketSendMessage",r.data)
+        }
+        websocket.onclose = ()=>{
+          console.log("断开websocket连接")
+        }
+        websocket.onerror = (er)=>{
+            console.log("websocket出错" + er)
+        }
+      }
+    } else {
+      //未登录则跳转到登陆界面，query:{ Rurl: to.fullPath}表示把当前路由信息传递过去方便登录后跳转回来；
+      store.state.islogin = false;
+      next({
+        path: '/login',
+        query: {
+          Rurl: to.fullPath
+        }
+      })
+      //判断是否有websocket连接，如果有进行断开
+      if(websocket){
+        websocket.close()
+        websocket = null
+      }
+    };
+  } else {
+    //进入到登录页面(打开系统，注销登录)
+    next()
+    //判断是否有websocket连接，如果有进行断开
+    if(websocket){
+      websocket.close()
+      websocket = null
+    }
+  }
+})
+ 
+ 
+ 
+ 
+重连
+var connection = function() {
+    var fromUserId = document.getElementById("fromUserId");
+    var url = 'ws://' + window.location.host + '/ycxcode/websocket/commodity/{' + fromUserId.value + '}';
+    socket = new WebSocket(url);
+    socket.onopen = onopen;
+    socket.onmessage = onmessage;
+    socket.onclose = onclose;
+    socket.onerror = onerror;
+}
+var onclose = function() {
+    console.log("close...");
+    reconnection();
+}
+var reconnection = function() {
+    count = count + 1;
+    console.log("reconnection...【" + count + "】");
+    //1与服务器已经建立连接
+    if (count >= MAX || socket.readyState == 1) {
+        clearTimeout(t);
+    } else {
+        //2已经关闭了与服务器的连接
+        if (socket.readyState == 3) {
+            connection();
+        }
+        //0正尝试与服务器建立连接,2正在关闭与服务器的连接
+        t = setTimeout(function() {reconnection();}, 100);
+    }
+}
+核心在onclose事件发生时调用reconnection()方法，但是要特别注意重试次数和状态控制。
+在socket.readyState == 3(已经关闭了与服务器的连接)才真正的发起连接，
+在socket.readyState == 1(与服务器已经建立连接)或重试次数超了设定值就终止重试，但要注意在终止浏览器页面及网络恢复时重刷页面
+在socket.readyState == 0(正尝试与服务器建立连接)或socket.readyState == 2(正在关闭与服务器的连接)时仅仅重试，而不发起连接
+ 
+ 

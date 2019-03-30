@@ -1,0 +1,949 @@
+search
+2018年11月6日
+17:33
+ 
+提交删除操作
+deleteRow(row){
+var _this = this
+console.log(row)
+this.$confirm('确认删除？').then(_ => {
+var commitData = {}
+commitData = {
+bomName:row.bomCode,
+bomType:row.assemblyType,
+fileName:row.fileName,
+level:'file',
+projName:this.productName,
+projVersion:this.productVersion,
+softNo:row.softwareNo,
+userId:this.$store.state.username
+};
+const deleteRowPath=`${C.paramlibAddr}/api/v1/project/deletefiles`;
+AXIOS.post(deleteRowPath,commitData).then(r=>{
+setTimeout(function(){
+_this.softwaresListData = _this.softwaresListData.filter(item => {
+return (item.md5 != row.md5)
+});
+},500)
+}).then(r=>{
+this.$notify({
+message: "删除成功",
+title: "操作提示",
+type: "success",
+offset: 100
+})
+}).catch(e => {
+this.$notify.error({
+message: "删除失败:" + e,
+title: "操作提示",
+offset: 100
+})
+})
+}).catch(_=>{
+console.log('取消删除')
+})
+},
+var path = C.paramlibAddr + `/api/v1/filetrans/importFileForParamApply/${productType}/${productId}/${projectName}/${version}/${updatedBy}/${transRule}`;
+ 
+const path = `${C.paramlibAddr}/api/v1/filetrans/uploadfile/binary?project=${project}&version=${version}&softCode=${softcode}&uploadBy=${uploadby}&fileType=${filetype}`
+ 
+export function deleteParamApply(id: number) {
+const path = `${C.paramlibAddr}/api/v1/paramapply/deleteParamApply/${id}`
+return AXIOS.get(path);
+}
+ 
+export function updateParamApply(model: any) {
+const path = `${C.paramlibAddr}/api/v1/paramapply/updateParamApply`
+return AXIOS.post(path, model);
+}
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+注意事项：
+1ajax里面使用_this替换this
+2post请求
+3页面刷新 setTimeout，使用filter重新获取表格数组
+4提交成功与失败要都要有提示
+ 
+模糊搜索工程列表
+工程相关 /api/v1/project/getProjects
+http://10.249.1.162:30072/api/v1/project/getProjects?name=test
+ 
+ 
+ 
+ 
+ 
+computed: {
+initProductNameFrom:function(){
+if(this.selected){
+if(this.selected.pointType == '4' || this.selected.pointType == '5' ){
+return this.selected.name;
+}else {
+return "";
+}
+}else{
+return "";
+}
+},
+ 
+ 
+登录与刷新
+2018年11月6日
+19:50
+ 
+export function getCookie(name){
+var arr,reg=new RegExp("(^|)"+name+"=([^;]*)(;|$)");
+if(arr=document.cookie.match(reg))
+return (arr[2]);
+else 
+return null;
+}
+ 
+export function setCookie(c_name,value,expiredays){
+var expdate = new Date();
+if (window.navigator.userAgent.indexOf('Chrome') !== -1) {
+//chrome有时差8个时区
+expiredays = expiredays + 1/3;
+}
+expdate.setDate(expdate.getDate()+expiredays);
+document.cookie=c_name+"="+escape(value)+((expiredays==null)?"":";expires="+expdate.toGMTString());
+}
+//删除cookies
+export function delCookie(name){
+var exp = new Date();
+exp.setTime(exp.getTime() - 1);
+var cval=getCookie(name);
+if(cval!=null) 
+document.cookie= name + "="+cval+";expires="+exp.toGMTString();
+}
+ 
+提交登录
+ 
+onSubmit: function() {
+this.isloading = true;
+let name = this.userinfo.name;
+let paswwd = this.userinfo.passwd;
+let type = this.userinfo.type;
+let passwdEncoded = Utils.encrypt(paswwd, "abcdefgabcdefg12");
+let userLoginContent = {
+userId: name,
+encodedPasswd: passwdEncoded,
+loginType: type
+};
+checkUserLogin(userLoginContent).then(re => {
+this.isloading = false;
+let result = re.data.result;
+let message = re.data.message;
+if (result) {
+this.$store.commit("setlogin", true);
+this.$store.commit("setuser", name);
+setCookie("LAST_USER", userLoginContent.userId,1/48);
+this.$router.push({
+path: "/30"
+});
+} else {
+this.isshow = true;
+this.$store.commit("setlogin", false);
+}
+});
+}
+ 
+刷新页面或跳转页面：
+ 
+router.beforeEach((to, from, next) => {
+if (to.matched.some(m => m.meta.auth)) {
+console.log("to:", to.fullPath)
+//对路由进行验证
+var temp = getCookie("LAST_USER");
+// if (store.state.islogin || temp) {
+if (temp) {
+store.state.islogin = true;
+store.state.username = temp;
+//正常跳转到你设置好的页面
+next()
+}else {
+//未登录则跳转到登陆界面，query:{ Rurl: to.fullPath}表示把当前路由信息传递过去方便登录后跳转回来；
+store.state.islogin = false;
+next({ path: '/login', query: { Rurl: to.fullPath } })
+};
+} else {
+next()
+}
+})
+ 
+to：
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+路由：
+ 
+ 
+this.$router.push({
+path: '/30/release'
+});
+ 
+<div v-if="!config.children" @click="clickNav(config_index, config.desc, 0, config.desc)">{{config.desc}}</div>
+ 
+clickNav: function (first_index, first, second_index, second) {
+ 
+this.current_navs_index = [first_index, second_index];
+ 
+this.$emit("clickHref", this.current_navs_index.join(""));
+ 
+onClickHref: function(navs) {
+this.$router.push({ path: '/' + navs })
+}
+ 
+ 
+ 
+流程
+2018年11月9日
+9:53
+ 
+进入页面发起的请求
+1 根据用户Id获取流程列表
+2 涉及该用户的处理的所有进程
+3 获取业务角色
+   
+ 
+  
+点击树节点，
+点击库节点3个请求：
+1 群组信息
+2 库指标列表
+3 用户针对此群组的权限
+ 
+点击装备、产品工程节点：
+1  节点信息
+2  群组信息其中有groupId
+3 版本列表 bom列表
+4 指标库列表
+5 查看群组中的用户及其他角色
+6用户针对此群组的权限
+7对应bom指标列表
+ 
+用户登录： userId
+选择工程：根据工程名称获取群组信息，其中有groupId
+根据groupId获取群组中的用户及角色
+userId对应有roleId和roleName
+根据groupId和userId查询用户在群组的权限列表
+Privilege 为1代表有权限
+privilegeId 标识操作类型
+   
+ 
+角色对应的权限
+ 
+节点类型pointType
+                value: '1',
+                label: '装备指标库节点'
+                }, {
+                value: '2',
+                label: '产品指标库节点'
+                }, {
+                value: '3',
+                label: '库目录节点'
+                }
+                value: '4',
+                label: '装备工程节点'
+                }, {
+                value: '5',
+                label: '产品工程节点'
+                }, {
+                value: '6',
+                label: '目录节点'
+                }
+查询某用户对某群组的某个资源是否具有权限
+api/v1/right/group/user/prilivelge?groupId=404&userId=l00311151&privilegeId=15
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+权限表格问题：
+1 admin群组成员 不一定可以删除修改业务群组
+   只有业务群组管理员可以修改删除业务群组
+   业务管理员比在admin群组内
+UserRightOp.getprilivelgesBygroupIdAndUserId(this.groupId, this.userId).then(r => {
+let temp = r.data.filter(item => {
+return (item.privilege == "1")
+});
+this.authorityArray = temp.map(item => item.privilegeId)
+})
+ 
+ishasPrilivelge(privilegeId) {
+this.isPermit = false;
+this.authorityArray.forEach(s => {
+if (s == privilegeId) {
+this.isPermit = true;
+}
+})
+},
+ 
+判定当前用户userId是否是某个工程的se
+ 
+ 
+根据工程名称获取groupId
+根据groupId获取角色se对应的userId  userRoles=[]
+比对userId
+ 
+userRoles.forEach(items=>{
+if Items.userId==userId
+    items.roles.forEach(item=>{
+If item.roleName = 'se'
+isHasRight = true
+ 
+userRoles.forEach(items=>{
+if Items.userId==userId
+    items.roles.forEach(item=>{
+If item.roleName = 'se'
+isHasRight = true
+ 
+用some函数重写
+根据工程名获取groupId
+根据groupId和userId获取权限列表
+判断权限列表内是否有se的所有权限
+ 
+只有se和开发人员有资源操作权利，只要判定当前用户有其中一项权利即可
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+权限问题
+//watch select的变化
+selected: function (val) {
+this.getGroupByGroupName();
+ 
+//根据群组名拿到群组id
+            getGroupByGroupName() {
+UserRightOp.getGroupByGroupName(this.selected.name).then(
+this.groupId = r.data.groupId
+this.getAllAuthorityinGroupByuserId();
+ 
+//根据群组id和userId拿到具有权限的操作privilegeId组成的数组
+getAllAuthorityinGroupByuserId(
+UserRightOp.getprilivelgesBygroupIdAndUserId(this.groupId, this.userId).then(r => {
+                        let temp = r.data.filter(item => {
+                            return (item.privilege == "1")
+                        });
+                        this.authorityArray = temp.map(item => item.privilegeId)
+                    })
+ 
+//切换群组的时候把用户的权限带回来 watch  判断是否可以操作   false可以true不可以
+authorityArray: function (val) { 
+                val.forEach(s => {
+                    if (s == 12) {
+                        this.isInsertForbidden = false;
+                        if (this.selected.children.length > 0 || this.product_id == "" || (this.selected
+                                .children.length == 0 && (this.selected.pointType == "2" || this.selected
+                                    .pointType == "1"))) {
+                            this.isInsertForbidden = true;
+                        }
+                    } else if (s == 15) {
+                        this.isDeleteForbidden = false;
+                        if (this.selected.children.length > 0 || (this.selected.children.length == 0 &&
+                                (this.selected.pointType == "2" || this.selected.pointType == "1"))) {
+                            this.isDeleteForbidden = true;
+                        }
+                    } else if (s == 13) {
+                        this.isCreateForbidden = false;
+                        if (this.selected.children.length > 0 || (this.selected.children.length == 0 &&
+                                (this.selected.pointType == "2" || this.selected.pointType == "1"))) {
+                            this.isCreateForbidden = true;
+                        }
+                    } else if (s == 14) {
+                        this.isSaveForbidden = false;
+                        if (this.selected.children.length > 0) {
+                            this.isSaveForbidden = true;
+                        }
+                    }
+                })
+            },
+ 
+//根据权限id判断用户是否具有某个权限.isPermit  true有权限
+ishasPrilivelge(privilegeId) {
+                this.isPermit = false;
+                this.authorityArray.forEach(s => {
+                    if (s == privilegeId) {
+                        this.isPermit = true;
+                    }
+                })
+            },
+ 
+//在是否有锁和是否有权限的条件下判断是否可以操作  true禁用 
+isAuthroityInLockAndRole(operation) {
+                let band = true;
+                if(this.selectType =="bom"){
+                    if (this.isOperator) {//没有锁或者自己锁的
+                        band = operation;
+                    } else {//锁住
+                        band = true;
+                    }
+                }else{
+                    if (this.isOperator2) {//没有锁或者自己锁的
+                        band = operation;
+                    } else {//锁住
+                        band = true;
+                    }
+                }
+                return band;
+            }
+ 
+//获取当前用户在群组中的角色roleId集合
+            getUserRolesBygroupIdAndUserId(){
+                let userlist = [];
+                this.usersFromServer.forEach(e => {
+                    if(e.userId.toLowerCase().trim() == this.userId.toLowerCase().trim()){
+                        let roles = e.roles;
+                        for (let i of roles) {
+                            userlist.push(i.roleId);
+                        }
+                    }
+                })
+                return userlist;
+            },
+            //获取每个角色roleId的用户集合
+            getUsersByRoleId(roleId) {
+                let userlist = [];
+                this.usersFromServer.forEach(e => {
+                    let roles = e.roles;
+                    for (let i of roles) {
+                        if (i.roleId == roleId) {
+                            userlist.push(e);
+                            break;
+                        }
+                    }
+                })
+                return userlist;
+            },
+ 
+ 
+群组权限ID：privilegeId
+指标内容查看11
+指标内容导入导出 12
+指标内容新建创建 13
+指标内容修改 14
+指标内容删除 15
+指标归档发布流程查看21
+指标归档发布流程创建22
+指标归档发布流程测试23
+指标归档发布流程主审24
+修改system admin群组成员 31
+修改group admin群组成员32
+创建指标业务群组33
+修改/删除指标业务群组41
+修改/删除指标业务群组SE42
+新增/修改/删除指标业务群组硬测人员43
+新增/修改/删除指标业务群组I&V人员44
+新增/修改/删除指标业务群组ATE人员45
+新增/修改/删除指标业务群组TE人员46
+新增/修改/删除指标业务群组开发人员47
+ 
+角色对应的权限：查看对应角色权限图
+业务相关角色id
+roleDesc-roleName-roleId
+群组管理员 admin 21
+SE se 22
+硬测人员 hardware tester 23
+I&V人员 I&V 24
+装备测试人员 ate tester 25
+生产TE  te 26
+开发人员 developer 27
+主管 manager 28
+ 
+只有开发人员和SE有权限做修改，其他角色只能查看
+只有SE可以归档
+群组创建人默认为群组SE和群组管理员
+ 
+按钮:
+判断是否显示：是否有权限，是否是工程节点
+判断是否可以操作：有权限显示，是否上锁
+ 
+ 
+ 
+记住我
+2018年11月21日
+16:27
+ 
+data：
+userArr:[]
+loginRember:false
+ 
+ 
+Created(){
+Let arr = unescape(getCookie("REMBER_USER"))
+This.userArr = JSON.parse(arr) || []
+}
+ 
+Methods:{
+pushUser(val){//记住我
+If(this.userArr.some(function(item){
+Return item.name ===val.name
+})){
+console.log('存在不需要添加',state.userArr)
+}else{
+This.userArr.push(val)
+}
+}
+pullUser(val){//无记住我
+If(this.userArr.some(function(item){
+Return item.name !==val.name
+})){
+This.userArr = this.userArr.filter(function(item){
+Return item.name !== val.name
+})
+}else{
+// console.log('不存在不需要剔除',state.userArr)
+}
+}
+ 
+selectUser(val) { //选择记忆用户名
+this.loginRember = true;
+this.userinfo.name = val;
+var selectedUser = this.userArr.filter(function (item) {
+return item.name == val
+})[0]
+this.userinfo.passwd = selectedUser.passwd;
+this.userinfo.type = selectedUser.type;
+},
+ 
+ 
+onSubmit: function () {
+let name = this.userinfo.name;
+let paswwd = this.userinfo.passwd;
+let type = this.userinfo.type;
+let remberUser = JSON.parse(JSON.stringify(this.userinfo))
+let userLoginContent = {
+userId: name,
+encodedPasswd: passwdEncoded,
+loginType: type
+};
+checkUserLogin(userLoginContent).then(re => {
+let result = re.data.result;
+if (result) {
+if (this.loginRember) {
+this.pushUser(remberUser)
+} else {
+this.pullUser(remberUser)
+}
+let remberUserList = JSON.stringify(this.userArr)
+setCookie("REMBER_USER", remberUserList,365);
+this.$router.push({
+path: "/30"
+});
+}
+})
+}
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 帮助文档
+2018年12月17日
+14:55
+ 
+ 
+帮助文档：
+1 使用word转html转vue
+<p class=ab style='text-indent:32.0pt'><span style='font-family:"Dotum",sans-serif'><img
+width=85 height=85 id="图片 2" src="testword.files/image001.jpg"
+alt="HW_POS_RGB_Vertical"></span></p>
+ 
+帮助文档：
+1把word直接另存为html（筛选过的网页）生成html文件和图片文件夹
+2新建vue文件，把html文件内的页面元素拷贝到template
+3把生成的图片文件夹放到项目content文件夹下面，
+4更改html内部src引入图片的路径：testword.files/image001.jpg改为../content/testword.files/image001.jpg
+ 
+问题：
+1字体颜色，红色生成删除线问题
+2排版问题
+ 
+ 
+ 
+使用插件	vue-markdown
+ 
+ 
+webpack配置
+2019年3月22日
+16:01
+ 
+"scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "vendor-build": "webpack --config webpack.config.vendor.js",
+    "dev": "node --max-old-space-size=4096 devserver.js",
+    "app-build": "webpack --verbose",
+    "app-build:prod": "webpack --env.prod",
+    "clean": "rimraf ./dist",
+    "prebuild:prod": "npm run clean && npm run vendor-build",
+    "build:prod": "webpack --config webpack.config.vendor.js --env.prod&&webpack --env.prod"
+  },
+打包运行：build:prod
+webpack配置：
+webpack.config.vendor.js
+const path = require('path')
+const webpack = require('webpack')
+const ExtractTextPlugin = require('extract-text-webpack-plugin')
+ 
+module.exports = (env) => {
+    const extractCss = new ExtractTextPlugin('vendor.css')
+    const isDevBuild = !(env && env.prod)
+ 
+    return [{
+        entry: {
+            vendor: [
+                'jquery',
+                'vue',
+                "vue-router",
+                'babel-polyfill',
+                'bootstrap/dist/css/bootstrap.min.css',
+                // 'reflect-metadata',
+ 
+                //element-ui
+                'element-ui',
+                // 'element-ui/lib/theme-default/index.css'
+            ]
+        },
+        module: {
+            rules: [
+                { test: /\.css(\?|$)/, use: extractCss.extract({ use: 'css-loader' }) },
+                {
+                    test: /\.(png|woff|woff2|eot|ttf|svg)(\?|$)/,
+                    loader: 'file-loader',
+                    query: {
+                        outputPath: './',
+                        publicPath: './'
+                    }
+                }
+            ]
+        },
+        output: {
+            path: path.resolve(__dirname, './', 'dist', 'lib'),
+            filename: isDevBuild ? '[name].js' : '[name].prod.js',
+            library: '[name]_[hash]'
+        },
+        plugins: [
+            extractCss,
+            new webpack.ProvidePlugin({ $: 'jquery', jQuery: 'jquery' }),
+            new webpack.DllPlugin({
+                path: path.resolve(__dirname, './', 'dist', 'lib', isDevBuild ? '[name]-manifest.json' : '[name]-manifest.prod.json'),
+                name: '[name]_[hash]'
+            }),
+            new webpack.DefinePlugin({
+                'process.env.NODE_ENV': isDevBuild ? '"development"' : '"production"'
+            })
+        ].concat(isDevBuild ? [] : [
+            new webpack.optimize.UglifyJsPlugin()
+        ])
+    }]
+}
+ 
+webpack.config.js
+const path = require('path');
+const fs = require('fs');
+ 
+const webpack = require('webpack')
+const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+const copyWebpackPlugin = require("copy-webpack-plugin")
+ 
+module.exports = (env) => {
+    const isDevBuild = !(env && env.prod)
+ 
+    return [{
+        context: path.join(__dirname, 'src'),
+        entry: fs.readdirSync(path.resolve(__dirname, './src')).reduce((entries, dir) => {
+            const fullDir = path.join(__dirname, 'src', dir);
+            const entry = path.join(fullDir, 'app.js')
+            if(dir=="home"||dir=="equipment"){
+            if (fs.statSync(fullDir).isDirectory() && fs.existsSync(entry)) {
+                entries[dir] = [entry]
+            }}
+            return entries
+        }, {}),
+ 
+        output: {
+            publicPath: '../',
+            path: path.resolve(__dirname, 'dist'),
+            filename: isDevBuild ? '[name]/bundle.js' : '[name]/[hash].bundle.js'
+        },
+ 
+        module: {
+            rules: [{
+                test: /\.ts$/,
+                loader: 'awesome-typescript-loader'
+            }, {
+                test: /\.js$/,
+                exclude: /node_modules/,
+                loader: 'babel-loader'
+            }, {
+                test: /\.css$/,
+                use: ExtractTextPlugin.extract({
+                    use: 'css-loader'
+                })
+            }, {
+                test: /\.less$/,
+                use: 'less-loader'
+            }, {
+                test: /\.vue$/,
+                use: 'vue-loader'
+            },{
+                test: /\.md$/,
+                use: 'html-loader'
+            }, {
+                test: /\.(eot|svg|ttf|woff|woff2|otf)(\?\S*)?$/,
+                loader: 'file-loader'
+            },
+            {
+                test: /\.(png|jpe?g|gif|svg)(\?\S*)?$/,
+                loader: 'file-loader',
+                // query: {
+                // name: '/[name].[ext]',
+                //     publicPath: './images',
+                //     outputPath: '../images',
+                //     useRelativePath: true
+                // }
+            }]
+        },
+ 
+        resolve: {
+            extensions: ['.js', '.ts']
+        },
+ 
+        devtool: 'source-map',
+        plugins: [
+            new ExtractTextPlugin('./[name]/style.css'),
+            new webpack.ProvidePlugin({ $: 'jquery', jQuery: 'jquery' }),
+            new webpack.DllReferencePlugin({
+                context: path.resolve(__dirname),
+                manifest: require(isDevBuild ? './dist/lib/vendor-manifest.json' : './dist/lib/vendor-manifest.prod.json')
+            }),
+            new copyWebpackPlugin([{
+                from: __dirname + '/static',
+                to: './static'
+            }]),
+            new webpack.HotModuleReplacementPlugin(), // enable HMR
+            new webpack.DefinePlugin({
+                'process.env.NODE_ENV': isDevBuild ? '"development"' : '"production"'
+            })
+        ].concat((function () {
+            const e = fs.readdirSync(path.resolve(__dirname, './src')).reduce((entries, dir) => {
+                const fullDir = path.join(__dirname, 'src', dir);
+                const entry = path.join(fullDir, 'app.js')
+                if(dir=="home"||dir=="equipment"){
+                if (fs.statSync(fullDir).isDirectory() && fs.existsSync(entry)) {
+                    const html = new HtmlWebpackPlugin({
+                        inject: false,
+                        template: isDevBuild ? './_Tpl.html' : './_Tpl_prod.html',
+                        filename: isDevBuild ? `./${dir}/index.html` : `./${dir}/index_prod.html`
+                    })
+                    entries.push(html)
+                }}
+                return entries
+            }, [])
+            return e;
+        }()))
+    }]
+}
+ 
+devserver.js
+const express = require('express')
+ 
+ 
+const app = express()
+app.use(express.static('dist'))
+ 
+const webpackDevMiddleware = require('webpack-dev-middleware')
+const webpack = require('./node_modules/webpack')
+const webpackconfig = require('./webpack.config')()[0]
+ 
+const compiler = webpack(webpackconfig)
+ 
+app.use(webpackDevMiddleware(compiler, {
+    publicPath: '/dist/',
+    stats: {
+        colors: true
+    }
+}))
+app.listen(20016)
+ 
+console.log('web server start on http://localohost:20016/home/index.html')
+ 
+//TODO

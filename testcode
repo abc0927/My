@@ -1,0 +1,1189 @@
+search
+2019年3月30日
+14:09
+ 
+<template>
+  <div class="searchFile-wrapper">
+    <div class="searchTop">
+      <div class='title'>
+        <span class="product-name">工程名称 </span>
+        <el-autocomplete ref="product" class="inline-input" v-model="productName" :fetch-suggestions="projectSearch"
+          placeholder="请输入工程名称" @select="selectProduct" :trigger-on-focus="false"></el-autocomplete>
+        <span class="product-version">工程版本 </span>
+        <el-select v-model="productVersion" placeholder="请选择" @change='changeVersion'>
+          <el-option v-for="version in versionsList" :label="version" :value="version">
+          </el-option>
+        </el-select>
+        <span class="btn" @click.stop="exportProject"><img src="../content/export.gif" alt="export">导出工程</span>
+      </div>
+      <div class="productmark-wrapper-search">
+          <el-popover placement="bottom-start" trigger="click" width="900">
+            <el-table :data="projectMarkList" border max-height="500px"  :row-style='rowClass'>
+              <el-table-column label="编码" prop="oldBom" min-width="300" show-overflow-tooltip></el-table-column>
+              <el-table-column label="工序" prop="oldWorkprocedure" width="150"></el-table-column>
+              <el-table-column label="工位" prop="oldWorkstation"  width="150"></el-table-column>
+              <el-table-column label="Flag" prop="oldFlag" width="150" show-overflow-tooltip></el-table-column>
+            </el-table> 
+            <span class="btn" slot="reference"><img src="../content/search.gif" alt="search">查看索引</span>
+          </el-popover>
+      </div>
+      <div class="productmark-wrapper-search">
+          <el-popover placement="bottom-start" trigger="click" width="900">
+            <el-table :data="paramFileList" border max-height="500px"  :row-style='rowClass'>
+              <el-table-column :label="transrule0 == '3'?'工位':'BOM'" width="170" show-overflow-tooltip>
+                <template slot-scope="scope">
+                  <span v-if="scope.row.bom !=  'null'">{{scope.row.bom}}</span>
+                  <span v-if="scope.row.workstation !=  'null'">{{scope.row.workstation}}</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="文件名称" prop="fileName" min-width="150">
+                <template slot-scope="scope">
+                  <div class="softwareitem filedownload" v-show='scope.row.fileName' @click="downloadParamFile(scope.row.fileUrl)">
+                    <!-- @click="download(scope.row.fileName,scope.row.md5)" -->
+                    <span>{{scope.row.fileName}}</span>
+                    <i class="el-icon-download" style="font-size:16px;float:right;color:red"></i>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column label="导入人员" prop="createdBy" width="150" ></el-table-column>
+              <el-table-column label="导入时间" prop="createdTime" :formatter="formatTime" width="170"></el-table-column>
+            </el-table> 
+            <span class="btn" slot="reference"><img src="../content/search.gif" alt="search">查看原导入指标文件</span>
+          </el-popover>
+      </div>
+      <div class="productmark-wrapper-search">
+        <el-popover placement="bottom-start" trigger="click" width="900" @hide="hideProcess" @show="activeProcess">
+            <el-table :data="factoryForm" border max-height="500px"  :row-style='rowClass'>
+              <el-table-column type="selection" label="序号" width="50" align="center"></el-table-column>
+              <el-table-column label="厂区名" prop="cmName" min-width="300" show-overflow-tooltip></el-table-column>
+              <el-table-column label="ATE列表工序" prop="ates" width="300"></el-table-column>
+              <el-table-column label="发行时间" prop="createTime"  width="300"></el-table-column>
+              <el-table-column label="发行人" prop="createBy" width="150" show-overflow-tooltip></el-table-column>
+              <el-table-column label="流程id" prop="flowId" width="150" show-overflow-tooltip></el-table-column>
+              <el-table-column label="同步任务id" prop="syncTaskId" width="150" show-overflow-tooltip></el-table-column>
+              <el-table-column label="操作" width="150" fixed="right" align="center">
+                <template slot-scope="scope">
+                    <el-button @click.native.prevent="viewProcess(scope.$index,scope.row)" type="text" size="small">
+                        查看流程
+                    </el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+            <div v-if="showProcess" style="padding: 10px;">
+              <h4>流程进程</h4>
+              <hr />
+            <!--<div ref="process" style="font-size: 12px;color: #8b8b8b;line-height: 16px;height: 100px;overflow-y: auto;    overflow-x: hidden;">
+                <p v-for="(process,index) in processOfFlow">{{formatprocess(process,index)}}</p>
+            </div>-->
+              <div style="">
+                  <el-steps :active="activeStep" finish-status="success" simple v-show="showPublishStep">
+                      <el-step title="创建任务"></el-step>
+                      <el-step title="流程审批" v-show="showRightStep"></el-step>
+                      <el-step title="同步厂区" v-show="showRightStep"></el-step>
+                      <el-step title="结束任务" v-show="showRightStep"></el-step>
+                      <el-step title="流程异常" status="error" v-show="!showRightStep"></el-step>
+                  </el-steps>
+                  <el-steps :active="activeStep2" finish-status="success" simple v-show="!showPublishStep">
+                          <el-step title="创建任务" ></el-step>
+                          <el-step title="审批" ></el-step>
+                          <el-step title="结束任务"></el-step>
+                  </el-steps>              
+              </div>
+              <div style="height:280px;overflow-y:auto">
+                  <h4>ServiceStatusLogs</h4>
+                  <hr/>
+                  <div ref="log" style="font-size: 12px;color: #8b8b8b;line-height: 16px;height: 180px;overflow-y: auto;    overflow-x: hidden;">
+                      <p v-for="log in logs" :class="log.level">{{formatlog(log)}}</p>
+                  </div>
+              </div>
+            </div>
+            <span class="btn" slot="reference"><img src="../content/search.gif" alt="search">查看发行</span>
+          </el-popover>
+      </div>
+    </div>
+    <hr>
+    <div class="versionDetail">
+      <div class="title-wrapper">
+        <div class="label-rec"></div>
+        <span class='title'>版本详情</span>
+      </div>
+      <div class='content'>
+        <div>
+          <span class="title">产品线:</span><span class="details">{{softwaresData.productLine}}</span>
+          <span class="second-part">
+            <span class='title'>产品:</span><span class="details">{{softwaresData.product}}</span>
+          </span>
+          <!-- <span class="third-part">
+            <span class="title">版本描述:</span><span class="details">{{softwaresData.desc}}</span>
+          </span> -->
+        </div>
+        <div>
+          <span class="title">版本创建人:</span>{{softwaresData.creator}}
+          <span class='second-part'>
+            <span class='title'>版本创建时间:</span><span class="details">{{softwaresData.createTime}}</span>
+          </span>
+        </div>
+        <div>
+          <span class="title">版本更新人:</span><span class="details">{{softwaresData.updator}}</span>
+          <span class='second-part'>
+            <span class='title'>版本更新时间:</span><span class="details">{{softwaresData.updateTime}}</span>
+          </span>
+        </div>
+        <div>
+          <span class="title">当前状态:</span><span class="details">{{softwaresData.prjStatus}}</span>
+          <span class="second-part">
+            <span class="title">版本描述:</span><span class="details">{{softwaresData.desc}}</span>
+            <span class='' v-show="softwaresData.prjStatus=='Approved'">
+              <el-button class='title' size="small" type="text" @click="getattchedfile(true)" v-show="ishasattachedfile">说明文档 <i class="el-icon-download" style="font-size:16px"></i></el-button>
+            </span>
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class='versionDetail'>
+      <div class="title-wrapper">
+        <div class="label-rec"></div>
+        <span class='title'>软件清单</span>
+      </div>
+      <div class='content'>
+        <el-table :data="softwaresListData" :max-height="searchFileTableHeight" :span-method="arraySpanMethod"
+          @filter-change="filterChange" highlight-current-row border :row-style='rowClass' ref='table' v-loading='loading'>
+          <el-table-column prop="assemblyType" label="配置类型" fixed width="120"></el-table-column>
+          <el-table-column prop="bomCode" label="Bom编码" width="120"></el-table-column>
+          <el-table-column prop="workProcedure" label="工序" width="80"></el-table-column>
+          <el-table-column prop="stationCode" label="工位" width="80"></el-table-column>
+          <el-table-column prop="softwareType" label="软件类型" width="110" :filters="filtersSoftwareType" :filter-method="filterHandler3"
+            column-key='softwareType'>
+          </el-table-column>
+          <el-table-column prop="softwareNo" label="软件编码" show-overflow-tooltip min-width="100">
+          </el-table-column>
+          <el-table-column label="文件名称" show-overflow-tooltip width="280">
+            <template slot-scope="scope">
+              <div class="softwareitem filedownload" v-show='scope.row.fileName' @click="download(scope.row.fileName,scope.row.md5)">
+                <span>{{scope.row.fileName}}</span>
+                <i class="el-icon-download" style="font-size:16px;float:right;color:red"></i>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column prop="md5" label="文件md5码" show-overflow-tooltip width="120"></el-table-column>
+          <el-table-column prop="softwareDesc" label="文件描述" show-overflow-tooltip width="120"></el-table-column>
+          <!-- <el-table-column prop="softwareName" label="软件名称" show-overflow-tooltip min-width="80"></el-table-column> -->
+          <el-table-column prop="createTime" label="归档时间" width="160">
+          </el-table-column>
+          <el-table-column prop="ownerName" label="归档人" width="100">
+          </el-table-column>
+          <el-table-column type="index" label="序号" width="65"></el-table-column>
+          <el-table-column label="操作" width="100">
+            <template slot-scope="scope">
+              <el-button type="text" @click.stop="deleteRow(scope.row)"  v-show="scope.row.softwareType !=='Target'">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+    </div>
+    <!--<div class='factoryList versionDetail'>
+      <div class="title-wrapper">
+        <div class="label-rec"></div>
+        <span class='title'>发行厂区列表</span>
+      </div>
+      <div class='content'>
+        <el-form ref="factoryForm" label-width="100px" :rules="factoryFormRules">
+          <el-form-item label="发行厂区" prop="issueFactory">
+              <el-popover
+                placement="right" title="发行厂区"
+                style="max-width: 50%;max-height: 50%;overflow:auto;"
+                v-model="dialogVisible">
+                <div>
+                  <el-checkbox :indeterminate="isIndeterminate" v-model="checkAll" @change="handleCheckAllChange">全选</el-checkbox>
+                  <div style="margin: 15px 0;"></div>
+                  <el-checkbox-group v-model="checkedCities" @change="handleCheckedCitiesChange">
+                    <el-checkbox v-for="city in cities" :label="city" :key="city">{{city}}</el-checkbox>
+                  </el-checkbox-group>
+                </div>
+                <div style="text-align: right; margin: 0">
+                  <el-button size="mini" type="text" @click="handleClose">取消</el-button>
+                  <el-button type="primary" size="mini" @click="sureChange">确定</el-button>
+                </div>
+                <el-button slot="reference" type="primary" plain>当前已经选择{{checkedCities.length}}项</el-button>
+              </el-popover>
+          </el-form-item>
+        </el-form>
+      </div>
+    </div>-->
+  </div>
+</template>
+ 
+<script>
+  import AXIOS from "axios";
+  import store from '../store/store.js'
+  import * as ProjectMarkOp from '../modules/projectMarkOp.ts'
+  import * as ParamApplyOp from '../modules/ParamApplyOp.ts'
+  import * as treeEdit from '../modules/treeEdit.ts'
+  import {
+    HostConfig as C
+  } from "../config";
+const cityOptions = ['上海', '北京', '广州', '深圳'];
+  export default {
+    props: {
+      initProductName: '',
+      searchFileTableHeight: ''
+    },
+    data() {
+      return {
+        transrule0:'1',
+        ishasattachedfile:false,
+        markActivename:[],
+        projectMarkList:[],
+        paramFileList:[],
+        isRight:false,
+        loading:false,
+        userId:this.$store.state.username,
+        selectArr: [],
+        filterTableData: [],
+        versionsList: [], //版本列表
+        softwaresData: {}, //版本详情，软件清单
+        // restaurants: [], //模糊搜索备选列表
+        productVersion: "", //工程版本
+        productName: "", //工程名称
+        productStatus: ['Approved', 'Test', 'Draft'], // 当前状态
+        statusColor: ['green', 'yellow', 'red'], //状态标识
+        downloadFilePath: '',
+        softwaresListData: [],
+        filtersSoftwareType: [], //软件类型筛选列表
+        factoryForm:[{
+          cmName:'aaa',
+          ates:'bbbb',
+          createTime:'ccc',
+          createBy:'dddd',
+          flowId:1,
+          syncTaskId:2
+        }],  //厂区数据
+        factoryFormRules:{
+            issueFactory:[{
+                required:true,
+                message:'请选择厂区',
+                trigger:'blur'
+            }],
+            application:[{
+                required:true,
+                message:'请填写申请信息',
+                trigger:'blur'
+            }],
+            isEmergency:[{
+                required:true,
+                trigger:'blur'
+            }]
+        },
+        radio:'2',
+        dialogVisible:false,
+        checkAll: false,
+        checkedCities: ['上海', '北京'],
+        cities: cityOptions,
+        isIndeterminate: true,
+        processOfFlow: [],
+        activeStep: 4,
+        activeStep2: 1,
+        showPublishStep:true,
+        showRightStep:true,
+        logs: [],
+        showProcess:false
+      };
+    },
+    watch: {
+      productName: function (newVal) {
+        // this.getSelectArr(newVal)
+        this.productName = ''
+        this.softwaresData = {}
+        this.versionsList = []
+        this.softwaresListData = []
+        this.productVersion = '';
+        this.productName = newVal;
+        if(this.productName){
+          // console.log('监听中有工程名称读取版本列表和索引信息')
+          this.getVersionsList();
+        }
+      }
+    },
+    mounted() {},
+    methods: {
+        formatlog(log) {
+          return `${log.eventTime}\t${log.eventBy}\t${log.eventDesc}`
+        },
+       formatprocess(process, index) {
+          let opr = process.processOprType
+          let opsresult = ''
+          let resBase = ''
+ 
+          if (opr != null) {
+              switch (opr) {
+                  case "0":
+                      opsresult = '通过'
+                      break;
+                  case "1":
+                      opsresult = '驳回'
+                      break;
+                  case "2":
+                      opsresult = '转移'
+                      break;
+                  case "3":
+                      opsresult = '中止流程'
+                      break;
+                  case "4":
+                      opsresult = '重启流程'
+                      break;
+                      default:
+                          break;
+              }
+          }
+ 
+          if (process.preProcessId == 0) {
+              resBase = `${new Date(process.createdTime).toLocaleString()}\t` +
+                  `创建人:${process.processFrom}已创建\t`
+              if (process.processOprType != null) {
+                  resBase +=
+                      `\t\t\t\t${new Date(process.updatedTime).toLocaleString()}\t${process.processTo}已处理\t\t操作:` +
+                      opsresult + `\t审批意见:` + process.processOprOpinion
+              } else {
+                  resBase += `${process.processTo}待处理`
+              }
+          } else {
+              resBase = `${new Date(process.createdTime).toLocaleString()}\t${process.processFrom}触发创建\t`
+              if (process.processOprType != null) {
+                  resBase +=
+                      `\t\t\t\t${new Date(process.updatedTime).toLocaleString()}\t${process.processTo}已处理\t\t操作:` +
+                      opsresult + `\t审批意见:` + process.processOprOpinion
+              } else {
+                  resBase += `${process.processTo}待处理`
+              }
+          }
+ 
+          return resBase;
+      },
+      viewProcess(row) {
+        //查看流程
+        this.showProcess = true;
+        ProjectMarkOp.eventlog(this.productName,this.productVersion,row.flowId).then(res=>{
+          console.log(res)
+          if(res.data.result){
+            this.logs = res.data.content;
+          }else{
+            this.$message.error(res.data.message);
+          }
+        }).catch(err=>{
+          console.log(err.message);
+        })
+      },
+      hideProcess() {
+        this.showProcess = false;
+      },
+      activeProcess() {
+        //版本已发行厂区查询
+        ProjectMarkOp.getFactoryForm(this.productName,this.productVersion).then(res=>{
+          console.log(res)
+          if(res.data.result){
+            this.factoryForm = res.data.content;
+          }else{
+            this.$message.error(res.data.message);
+          }
+        }).catch(err=>{
+          // this.$message.error(err.message);
+          console.log(err.message);
+        })
+      },
+      handleCheckAllChange(val) {
+        this.checkedCities = val ? cityOptions : [];
+        this.isIndeterminate = false;
+      },
+      handleCheckedCitiesChange(value) {
+        let checkedCount = value.length;
+        this.checkAll = checkedCount === this.cities.length;
+        this.isIndeterminate = checkedCount > 0 && checkedCount < this.cities.length;
+      },
+      sureChange(){
+        this.handleClose();
+      },
+      handleClose(){
+        this.dialogVisible = false;
+      },
+      openDia(){
+        this.dialogVisible = true;
+      },
+      formatTime(row, column, cellValue, index){
+        let date = row.createdTime
+        if (date == undefined) {
+            return ''
+        }
+        return new Date(date).toLocaleString()
+      },
+      downloadParamFile(url){
+        window.open(url)
+      },
+      getattchedfile(isdown){//下载说明文档
+        const path = `${C.paramlibAddr}/api/v1/filetrans/getattchedfile?projectName=${this.productName}&projectVersion=${this.productVersion}`
+        AXIOS.get(path).then(res=>{//如果没有说明文档，点击下载要给个提示？
+          if(res.data){
+            this.ishasattachedfile = true
+            if(isdown){
+              window.open(path)
+            }
+          }else{
+            this.ishasattachedfile = false
+            // this.$message('版本归档人没有添加说明文档')
+          }
+        }).catch(err=>{
+          console.log(err)
+        })
+      },
+      exportProject(){//导出工程
+        if(this.softwaresListData.length<=0){
+          this.$message('此工程版本暂时没有文件可导出');
+          return
+        }
+        var productVersion = this.productVersion
+        var productName = this.productName
+        const path = `${C.paramlibAddr}/api/v1/project/exportGDFiles?version=${productVersion}&proj_name=${productName}`
+        AXIOS.get(path).then(res=>{
+          window.open(path)
+        }).catch(err=>{
+          this.$message('导出请求失败' + err);
+        })
+      },
+      getIsRight(){ //获取当前用户对工程文件是否有删除权限
+        this.isRight = false;
+        var userId = this.userId;
+        var productName = this.productName;
+        var groupId;
+        const groupPath = `${C.paramlibAddr}/api/v1/right/group?groupName=${productName}`
+        AXIOS.get(groupPath).then(r=>{
+          if(r.data){
+            groupId = r.data.groupId;
+            const prilivelgesPath = `${C.paramlibAddr}/api/v1/right/group/user/prilivelge?groupId=${groupId}&userId=${userId}&privilegeId=15`
+            AXIOS.get(prilivelgesPath).then(r=>{
+              this.isRight=r.data
+            }).catch(e=>{
+              this.$message.error('查询用户导入导出权限失败'+e)
+            })
+          }else{
+            console.log('查询群组信息为空')
+          }
+        }).catch(e=>{
+          console.log('查询群组信息失败' + e)
+        })
+      },
+      getProduct() { // 获取工程名称
+        this.productName = ''
+        this.softwaresData = {}
+        this.versionsList = []
+        this.softwaresListData = []
+        this.productVersion = '';
+        this.productName = this.initProductName;
+        if(this.productName){
+          this.getVersionsList();//有监听，这里不可以省略，点击相同工程不会触发监听
+        }
+      },
+      changeProduct(value) { //输入后丢失光标更改工程名称
+        // console.log(value)
+        // this.getVersionsList();
+      },
+      selectProduct(item) { //模糊搜索更改工程名称
+        this.productName = item.value;
+        // console.log('输入工程名称搜索')
+        // this.getVersionsList();//已通过监视执行
+      },
+      changeVersion(value) { // 更换版本获取版本详情和软件清单
+        this.getSoftwaresData(value);
+      },
+      getVersionsList() { //获取工程版本列表及工程模式
+        var _this = this;
+        var productName = this.productName;
+        treeEdit.getPointInfoByName(productName).then(re=>{//查询工程模式
+          this.transrule0 = re.data.transrule
+        }).catch(er=>{
+          this.$message.error("获取工程模式失败" + er)
+        })
+        const versionPath = `${C.paramlibAddr}/api/v1/project/getVersions/${productName}`;
+        AXIOS.get(versionPath).then(re=>{
+          if (re.data.length > 0) {
+            this.getIsRight();//获取用户对群组是否有删除权限 isRight
+            this.getProjectMark(productName)//获取索引信息
+            this.versionsList = re.data.reverse();
+            this.productVersion = this.versionsList[0];
+            this.getattchedfile(false);//查询是否有说明文档
+            this.getSoftwaresData(this.productVersion); //获取最新版本信息和软件清单
+          }else{
+            // _this.$message('版本列表为空')
+            console.log('版本列表为空');
+          }
+        }).catch(err=> {
+          // this.$message('获取版本信息失败' + err)
+          console.log('获取版本信息失败' + err);
+        });
+      },
+      getProjectMark(name){
+        ProjectMarkOp.getProjectIndexInProject(name).then(re=>{
+          if(re.data.length == 0){
+              this.projectMarkList = []
+          }else{
+              let redata= re.data.sort(this.comparator('bom'))
+              this.projectMarkList = redata
+          }
+        })
+      },
+      getSoftwaresData(value = this.versionsList[0]) { //获取对应版本号的版本信息和软件清单
+        this.loading = true;
+        var _this = this;
+        var productName = this.productName;
+        var productVersion = value;
+        this.getParamFile(productName,productVersion)//获取导入指标文件
+        this.$refs.table.clearFilter();
+        const softwarePath =`${C.paramlibAddr}/api/v1/project/getSoftwares?productName=${productName}&productVersion=${productVersion}`;
+        AXIOS.get(softwarePath).then(re=> {
+            this.loading = false;
+            if (re.data !== '') {
+              var arr1 = []
+              this.filtersSoftwareType = []
+              this.softwaresData = re.data;
+              this.softwaresListData = this.arrdrop(re.data.AssemblyInfo, 'SoftwareInfo'); //数据初始化处理
+              this.softwaresListData.sort(this.comparator('assemblyType', this.comparator('bomCode', this.comparator(
+                'workProcedure',this.comparator('stationCode'))))) //数据排序，表格合并前处理
+              this.filterTableData = this.softwaresListData
+              this.softwaresListData.forEach((item) => { //获取筛选列filters数组
+                this.editArr(item.softwareType, arr1, this.filtersSoftwareType)
+              })
+            }
+          })
+          .catch(function (err) {
+            _this.loading = false
+            console.log(err);
+          });
+      },
+      getParamFile(projectname,version){
+        ParamApplyOp.getParamFile(projectname,version).then(re=>{
+          this.paramFileList = re.data
+        }).catch(er=>{
+          this.$message.error('获取导入文件失败'+ er)
+        })
+      },
+      editArr(obj, arr, brr) { //筛选列数组处理,剔除相同项
+        if (obj) {
+          if (arr.indexOf(obj) === -1) {
+            arr.push(obj)
+            brr.push({
+              text: `${obj}`,
+              value: `${obj}`
+            })
+          }
+        }
+      },
+      download(fileName, fileMd5) {
+        const downloadPath = `${C.paramlibAddr}/api/v1/project/downloadfile?fileName=${fileName}&fileMd5=${fileMd5}`;
+        window.open(downloadPath);
+        AXIOS.get(downloadPath)
+          .then(function (response) {
+            // console.log(response.data)
+          })
+          .catch(function (err) {
+            console.log(err);
+          });
+      },
+      filterHandler3(value, row, column) { //软件类型筛选
+        // const property = column.property;
+        // return row[property] === value;
+        return row.softwareType === value;
+      },
+      filterChange(obj) {
+        // console.log('change',obj)
+        if (obj.softwareType.length > 0) {
+          this.filterTableData = this.softwaresListData.filter((items) => {
+            return obj.softwareType.indexOf(items.softwareType) > -1
+          })
+        } else {
+          this.filterTableData = this.softwaresListData
+        }
+      },
+      projectSearch(queryString, cb) {// 工程名称模糊搜索
+        // console.log('获取建议列表')//值发生变化就发生一次queryString是绑定值，如input事件
+        var timeout = null
+        var resultsLast = []
+        // var restaurants = [];//要在这之前拿到过滤数组
+        const path = `${C.paramlibAddr}/api/v1/project/getProjects?name=${queryString}`;
+        AXIOS.get(path).then(re=> {
+          re.data.forEach((item) => {
+            resultsLast.push({
+              "value": item
+            })
+          })
+          var results = queryString ? resultsLast.filter(this.createStateFilter(queryString)) : resultsLast;
+          clearTimeout(timeout);
+          timeout = setTimeout(() => {// 调用 callback 返回建议列表的数据
+            cb(results);
+          }, 500)
+        }).catch(err=> {
+          console.log(err);
+        });
+      },
+      createStateFilter(queryString) {
+        return (state) => {
+          return (state.value.toLowerCase().indexOf(queryString.toLowerCase()) === 0);
+        };
+      },
+      // changeStatus() { //更改状态显示颜色
+      //   var index = this.productStatus.indexOf(this.softwaresData.prjStatus);
+      //   var color = this.statusColor[index];
+      //   this.$refs.persentStatue.style.backgroundColor = color;
+      // },
+      arrdrop(array, key) { //数组降维处理，解决table表格嵌套问题
+        var arr = []
+        array.forEach((items) => {
+          if (items.workProcedure == '') {
+            items.workProcedure = '-';
+          }
+          if (items.stationCode == '') {
+            items.stationCode = '-';
+          }
+          if (items[key]) {
+            items[key].forEach((item) => {
+              Object.assign(item, items);
+              delete item[key];
+              arr.push(item)
+            })
+          }
+        })
+        return arr;
+      },
+      comparator(prop, fn) { //对象数组排序比较器
+        return function (a, b) {
+          var x = a[prop];
+          var y = b[prop];
+          if (x === y) {
+            return typeof fn === 'function' ? fn(a, b) : 0;
+          } else {
+            return x > y ? -1 : 1;
+          }
+        }
+      },
+      getSpanArr(data, key1, key2, key3, key4, key5) { //表格行合并预处理函数
+        var oneArr = [];
+        var twoArr = [];
+        var threeArr = [];
+        var fourArr = [];
+        var oneIndex = 0;
+        var twoIndex = 0;
+        var threeIndex = 0;
+        var fourIndex = 0;
+        for (var i = 0; i < data.length; i++) {
+          if (i === 0) { //第一列
+            oneArr.push(1);
+            oneIndex = 0
+          } else { // 判断当前元素与上一个元素是否相同
+            if (data[i][key1] === data[i - 1][key1]) {
+              oneArr[oneIndex] += 1;
+              oneArr.push(0);
+            } else {
+              oneArr.push(1);
+              oneIndex = i;
+            }
+          };
+          if (oneArr[i] > 0) { //第二列
+            twoArr.push(1);
+            twoIndex = i
+          } else {
+            if (data[i][key2] === data[i - 1][key2]) {
+              twoArr[twoIndex] += 1;
+              twoArr.push(0);
+            } else {
+              twoArr.push(1);
+              twoIndex = i
+            }
+          };
+          if (twoArr[i] > 0) { //第三列
+            threeArr.push(1);
+            threeIndex = i
+          } else {
+            if (data[i][key3] === data[i - 1][key3]) {
+              threeArr[threeIndex] += 1;
+              threeArr.push(0);
+            } else {
+              threeArr.push(1);
+              threeIndex = i
+            }
+          };
+          if (threeArr[i] > 0) { //第四列
+            fourArr.push(1);
+            fourIndex = i
+          } else {
+            if (data[i][key4] === data[i - 1][key4]) {
+              fourArr[fourIndex] += 1;
+              fourArr.push(0);
+            } else {
+              fourArr.push(1);
+              fourIndex = i
+            }
+          };
+        }
+        return {
+          oneArr: oneArr,
+          twoArr: twoArr,
+          threeArr: threeArr,
+          fourArr: fourArr
+        };
+      },
+      arraySpanMethod: function ({ //表格行合并
+        row,
+        column,
+        rowIndex,
+        columnIndex
+      }) {
+        // console.log('执行合并1')
+        var data = this.getSpanArr(this.filterTableData, 'assemblyType', 'bomCode', 'workProcedure', 'stationCode');
+        var first = data.oneArr;
+        var second = data.twoArr;
+        var third = data.threeArr;
+        var fourth = data.fourArr;
+        if (columnIndex === 0) {
+          // console.log('执行合并2')
+          const row = first[rowIndex];
+          const col = row > 0 ? 1 : 0;
+          return {
+            rowspan: row,
+            colspan: col
+          }
+        } else if (columnIndex === 1) {
+          const row = second[rowIndex];
+          const col = row > 0 ? 1 : 0;
+          return {
+            rowspan: row,
+            colspan: col
+          }
+        } else if (columnIndex === 2) {
+          const row = third[rowIndex];
+          const col = row > 0 ? 1 : 0;
+          return {
+            rowspan: row,
+            colspan: col
+          }
+        } else if (columnIndex === 3) {
+          const row = fourth[rowIndex];
+          const col = row > 0 ? 1 : 0;
+          return {
+            rowspan: row,
+            colspan: col
+          }
+        }
+      },
+      rowClass: function () {
+        return {
+          "font-size": "14px"
+        }
+      },
+      deleteRow(row) { //删除表格行
+        var _this = this
+        // console.log(row)
+        if(!this.isRight){
+          this.$message('你没有权限删除')
+          return
+        }
+        this.$confirm('确认删除？').then(_ => {
+          var commitData = {}
+          commitData = {
+            bomName: row.bomCode,
+            bomType: row.assemblyType,
+            fileName: row.fileName,
+            level: 'file',
+            projName: this.productName,
+            projVersion: this.productVersion,
+            softNo: row.softwareNo,
+            userId: this.$store.state.username
+          };
+          const deleteRowPath = `${C.paramlibAddr}/api/v1/project/deletefiles`;
+          AXIOS.post(deleteRowPath, commitData).then(r => {
+            setTimeout(function () {
+              _this.softwaresListData = _this.softwaresListData.filter(item => {
+                return (item.md5 != row.md5)
+              });
+            }, 500)
+          }).then(r => {
+            this.$message.success("删除成功")
+            this.getSoftwaresData(this.productVersion); //重新获取软件清单
+          }).catch(e => {
+            this.$message.error("删除失败:" + e)
+          })
+        }).catch(_ => {
+          console.log('取消删除')
+        })
+      },
+      // getSelectArr(name) {
+      //   var _this = this
+      //   this.restaurants = []
+      //   const path = `${C.paramlibAddr}/api/v1/project/getProjects?name=${name}`;
+      //   AXIOS.get(path).then(re=> {
+      //     this.restaurants = re.data;
+      //   }).catch(err=> {
+      //     console.log(err);
+      //   });
+      // }
+    }
+  };
+</script>
+<style scoped>
+  .searchFile-wrapper {
+    background-color:#fff;
+    /* margin-top: -30px; */
+    padding: 10px;
+  }
+ 
+  .searchTop {
+    margin-left: 5px;
+    height:40px;
+  }
+  .searchTop .title{
+    font-weight: 700;
+    display:inline-block;
+    /* width:710px; */
+    /* float:left; */
+  }
+  .productmark-wrapper-search{
+    display:inline-block;
+    /* margin-left:710px; */
+    /* position:relative; */
+  }
+  .btn{
+    cursor:default;
+  }
+  .btn:hover{
+    color:#409EFF
+  }
+ .title-wrapper {
+    margin: 0px 0 10px 5px;
+  }
+  .title-wrapper .title {
+    margin-left: 10px;
+    font-weight:700;
+    line-height:25px;
+  }
+  .versionDetail .content {
+    position: relative;
+    margin:0 0 20px 60px;
+  }
+ 
+  .versionDetail .content>div {
+    line-height: 30px;
+  }
+ 
+  .versionDetail .content .title {
+    font-weight: 700;
+    margin-right: 10px;
+  }
+ 
+  .versionDetail .content .second-part {
+    position: absolute;
+    left: 350px;
+  }
+ 
+  .versionDetail .content .third-part {
+    position: absolute;
+    left: 700px;
+  }
+ 
+  .softList .content {
+    padding: 0;
+  }
+ 
+  .filedownload:hover {
+    cursor: default;
+    color:red;
+  }
+ 
+  hr{
+    border:2 solid #eee;
+  }
+  
+</style>
+ 
+ 
+login
+2019年3月30日
+14:09
+ 
+<template>
+  <el-card class="login-main" shadow="always">
+    <div slot="header" class="login-title">
+      <div class="login-title-img"><img src="../content/loginLogo.png" alt="Paris"></div>
+      <div class="login-title-font">指标云传递</div>
+    </div>
+    <div class="login-content">
+      <el-form ref="form" :model="userinfo" label-width="80px" label-position="left">
+        <el-form-item label="登录方式:">
+          <el-select v-model="userinfo.type" placeholder="" >
+            <el-option v-for="item in logintypes" :label="item.label" :value="item.value">
+            </el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="用户名:">
+          <!-- <el-input v-model="userinfo.name" clearable placeholder="请输入用户名" autofocus></el-input> -->
+          <div class="username-wrapper">
+            <el-input v-model="userinfo.name" placeholder="请输入用户名" autofocus @keyup.enter.native="passwordFocus" ref="name"></el-input>
+            <el-dropdown class="dropDown" @command="selectUser">
+              <i class="el-icon-arrow-down el-icon-right"></i>
+              <el-dropdown-menu slot="dropdown" class="dropDownMenu">
+                <div style="width:265px;max-height:120px;overflow:auto;">
+                  <el-dropdown-item class="remberList" style="position:relative;"  
+                  v-for="(item,index) in userArr" :key="index" :command="item.name" :divided="index==0?false:true">
+                    <span>{{item.name}}</span>
+                    <i class="el-icon-error remberListBtn" style="position:absolute;right:15px;top:12px;z-index:2"  @click.stop="deleteRember(item)"></i>
+                  </el-dropdown-item>
+                  <el-dropdown-item v-show="userArr.length == 0" disabled>
+                    暂无记忆列表
+                  </el-dropdown-item>
+                </div>
+              </el-dropdown-menu>
+            </el-dropdown>
+          </div>
+        </el-form-item>
+        <el-form-item label="密码:">
+          <el-input ref="password" v-model="userinfo.passwd" clearable placeholder="请输入密码" type="password" @keyup.enter.native="onSubmit"></el-input>
+        </el-form-item>
+        <el-form-item label="">
+          <el-checkbox v-model="loginRember">记住我</el-checkbox>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="onSubmit" round :loading="isloading">登录</el-button>
+        </el-form-item>
+        <el-form-item label="" v-if="isshow">
+          <label class="login-error-msg">对不起，您的用户名不存在或密码错误 - 请重试。</label>
+        </el-form-item>
+      </el-form>
+    </div>
+  </el-card>
+</template>
+ 
+<script>
+  import Vuex from "vuex";
+  import store from "../store/store.js";
+  import {
+    checkUserLogin
+  } from "../modules/userRightOp";
+  import {
+    JSEncrypt
+  } from "jsencrypt";
+  import {
+    getCookie,
+    setCookie,
+    delCookie
+  } from '../modules/cookieutil'
+  import Utils from "../modules/utils.js";
+ 
+  const userinfo = {
+    type: "domain",
+    name: "",
+    passwd: ""
+  };
+ 
+  const publicKey =
+    "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCk2CY9CDbkcSyLLJJD8hjRDK21Fe6ESqYXXXny5laT3OasCUBU6hV3YRg+5nsmtSQt17NDff3mY8KR/N3mMFQ/TlbaieNivIX9effN6kEMM5rlQs/YoOWCELat1F2/zuGAs41UPZMBdLmatWhPZEjTsX+hhdoZIHXehQ+IAo4G1wIDAQAB";
+ 
+  const logintypes = [{
+      value: "domain",
+      label: "域账号"
+    },
+    {
+      value: "atecenter",
+      label: "ATE账号"
+    }
+  ];
+ 
+  const com = {
+    data: function () {
+      return {
+        loginRember: true,
+        userArr: [],
+        userinfo: userinfo,
+        logintypes: logintypes,
+        isshow: false,
+        isloading: false,
+        publicKey: publicKey,
+        userId: this.$store.state.username
+      };
+    },
+    store,
+    created() {
+      let arr = JSON.parse(unescape(getCookie("REMBER_USER"))) || []
+      this.userArr = arr.reverse()
+    },
+    methods: {
+      deleteRember(val){
+        this.$confirm('确认删除已经记住的用户?').then(()=>{
+          this.userArr = this.userArr.filter(function (item) {
+            return item.name !== val.name
+          })
+          let remberUserList = JSON.stringify(this.userArr)
+          setCookie("REMBER_USER", remberUserList,30);
+        }).catch(()=>{
+          console.log('取消删除')
+        })
+      },
+      pushUser(val) { //记住我
+        if (this.userArr.some(function (item) {
+            return item.name === val.name
+          })) {
+          // console.log('存在不需要添加',state.userArr)
+        } else {
+          this.userArr.push(val)
+          // console.log('记住没我添加',state.userArr)
+        }
+      },
+      pullUser(val) { //没有记住我
+        if (this.userArr.some(function (item) {
+            return item.name == val.name
+          })) {
+          this.userArr = this.userArr.filter(function (item) {
+            return item.name !== val.name
+          })
+          // console.log('没记住有我剔除',state.userArr)
+        } else {
+          // console.log('不存在不需要剔除',state.userArr)
+        }
+      },
+      selectUser(val) { //选择记忆用户名
+        this.loginRember = true;
+        this.userinfo.name = val;
+        var selectedUser = this.userArr.filter(function (item) {
+          return item.name == val
+        })[0]
+        this.userinfo.passwd = selectedUser.passwd;
+        this.userinfo.type = selectedUser.type;
+        this.$refs.name.focus()
+      },
+      passwordFocus(){
+        this.$refs.password.focus()
+      },
+      onSubmit: function () {
+        var _this = this
+        this.isloading = true;
+        let name = this.userinfo.name.trim().toLowerCase();
+        let paswwd = this.userinfo.passwd;
+        let type = this.userinfo.type;
+ 
+        let passwdEncoded = Utils.encrypt(paswwd, "abcdefgabcdefg12");
+ 
+        let encrypt = new JSEncrypt();
+        encrypt.setPublicKey(this.publicKey);
+        let encryptedPasswd = encrypt.encrypt(paswwd);
+        let remberUser = JSON.parse(JSON.stringify(this.userinfo))
+        let userLoginContent = {
+          userId: name,
+          //encodedPasswd: escape(encryptedPasswd),
+          encodedPasswd: passwdEncoded,
+          loginType: type
+        };
+ 
+        checkUserLogin(userLoginContent).then(re => {
+          this.isloading = false;
+          let result = re.data.result;
+          let message = re.data.message;
+          if (result) {
+            if (this.loginRember) {
+              this.pushUser(remberUser)
+            } else {
+              this.pullUser(remberUser)
+            }
+            let remberUserList = JSON.stringify(this.userArr)
+            setCookie("REMBER_USER", remberUserList,30);
+ 
+            this.$store.commit("setlogin", true);
+            this.$store.commit("setuser", name);
+            var tempName = getCookie("LAST_USER");
+            if (this.userId !== tempName) {
+              delCookie("CLOUDATE_INDICATOR_PROJECT_SELECTED_LEVEL3");
+              delCookie("CLOUDATE_INDICATOR_PROJECT_SELECTED_LEVEL5");
+            }
+            setCookie("LAST_USER", userLoginContent.userId);
+            this.$router.push({
+              path: "/30"
+            });
+          } else {
+            this.isshow = true;
+            this.$store.commit("setlogin", false);
+          }
+        });
+      }
+    }
+  };
+  export default com;
+</script>
+ 
+<style scoped>
+  .login-main {
+    height: 486px;
+    width: 440px;
+    position: absolute;
+    left: 50%;
+    top: 240px;
+    margin-left: -220px;
+    /* margin-top: -120px; */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3),
+      0 0 27px rgba(255, 255, 255, 0.6) inset;
+  }
+ 
+  .login-title {
+    width: 400px;
+    height: 45px;
+    margin: 0px 15px 0px 15px;
+  }
+ 
+  .Login-title-img {
+    width: 205px;
+    height: 60px;
+    float: left;
+    margin-left: 0px;
+  }
+ 
+  .login-title-font {
+    height: 25px;
+    margin-top: 20px;
+    padding-left: 15px;
+    line-height: 25px;
+    float: left;
+    font-size: 24px;
+    border-left: 2px solid white;
+    font-family: 微软雅黑;
+    color: #484b60;
+  }
+ 
+  .login-content {
+    height: 300px;
+    margin: 20px 20px;
+  }
+ 
+  .login-error-msg {
+    font-size: 10px;
+    color: red;
+    padding-left: 15px;
+  }
+ 
+  .el-select {
+    width: 270px;
+  }
+ 
+  .el-button {
+    position: relative;
+    left: 200px;
+  }
+ 
+  .username-wrapper {
+    position: relative;
+  }
+ 
+  .dropDown {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+  }
+  .remberList:hover{
+    background-color: #ddd
+  }
+  .remberListBtn:hover{
+    color:red
+  }
+</style>

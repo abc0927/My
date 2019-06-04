@@ -1,0 +1,659 @@
+样式
+2019年2月22日
+14:09
+包含块与BFC
+ 
+包含块概念：
+一、包含块简单说就是定位参考框或者定位坐标参考系，元素一旦定义了定位显示（相对、绝对、固定）都具有包含块性质，它所包含的定位元素都将以该包含块为坐标系进行定位和调整。
+二、包含块是视觉格式化模型的一个重要概念，它与框模型类似，也可以理解为一个矩形，而这个矩形的作用是为它里面包含的元素提供一个参考，元素的尺寸和位置的计算往往是由该元素所在的包含块决定的。
+三、原理：一个元素盒子的位置和大小有时是通过相对于一个特定的长方形来计算的，这个长方形就被称之为元素的 containing block。一个元素的 containing block 按以下方式定义：
+1、用户代理选择根元素作为包含块（称之为初始 containing block）。
+2、如果 position 属性是 static 或 relative 的话，包含块就是由它的最近的祖先块元素（比如说inline-block, block 或 list-item元素）或格式化上下文BFC,内容区的边缘组成。
+3、如果元素有属性 'position:fixed'，包含块由视口建立。
+4、如果元素有属性 'position:absolute'，containing block 由最近的 position 不是 static 的祖先建立，按下面的步骤：
+a、如果祖先是块级元素，由祖先的padding边缘形成。
+b、如果祖先是内联元素，取决于祖先的 direction 属性。
+⑴如果 direction 是 ltr（左到右），祖先产生的第一个盒子的上、左内容边界是包含块的上方和左方，祖先的最后一个盒子的下、右内容边界是包含块的下方和右方。
+⑵如果 direction 是 rtl（右到左），祖先产生的第一个盒子的上、右内容边界是包含块的上方和右方，祖先的最后一个盒子的下、左内容边界是包含块的下方和左方。
+c、如果祖先（不管祖先是否为块）都是static，找到body内容边界为包含块。
+ 
+实例：
+1、元素position为默认的static且它的父元素的display为inline，所以此元素的包含块为继续向上找直到块元素或body标签 
+ 
+作用：
+如果某些属性被赋予一个百分值的话，它的计算值是由这个元素的包含块计算而来的。这些属性包括盒模型属性和偏移属性：
+height, top, bottom 这些属性由包含块的 height 属性的值来计算它的百分值。如果包含块的 height 值依赖于它的内容，且包含块的 position 属性的值被赋予 relative 或 static的话，这些值的计算值为0。
+width, left, right, padding, margin, text-indent(2018-05-27修改)这些属性由包含块的 width 属性的值来计算它的百分值。
+ 
+ 
+ 
+ 
+overflow:hidden
+解决：
+1、溢出隐藏
+2、清除内部浮动
+3、防止垂直 margin 重叠
+4、自适应两栏布局
+ 
+右测自适应宽度布局效果（）
+.left(float:left)
+.rigth(margin-left:xxx)如果左侧宽度不定，可以用BFC方法 .rigth(overflow:hidden/auto)
+为什么需要margin-left:
+每个元素的margin box的左边， 与包含块border box的左边相接触(对于从左往右的格式化，否则相反)。即使存在浮动也是如此。
+为什么右侧单元使用BFC可以：
+BFC的区域不会与float box重叠。
+为什么可以清除浮动：
+计算BFC的高度时，浮动元素也参与计算
+为什么会margin重叠：
+两个或多个盒子(可能相邻也可能嵌套)的相邻边界(其间没有任何非空内容、补白、边框)重合在一起而形成一个单一边界。 
+Box垂直方向的距离由margin决定。属于同一个BFC的两个相邻Box的margin会发生重叠；父子元素magin重叠，父子属于同一个BFC（根元素）
+如何防止重叠：
+使用容器包裹，形成不同的BFC；父子元素的magin重叠，给父元素设置BFC
+ 
+防止父子margin-top重叠
+ 
+ 
+1.让父元素变成块状格式化上下文元素（即BFC）：在父元素中加“overflow:hidden;”
+ 
+2.给父元素添加border属性：例如1px solid red；
+ 
+3.在父元素中添加padding-top；
+ 
+4.在父元素和子元素之间添加空格文字图片等；
+ 
+ 
+ 
+ 
+Box: CSS布局的基本单位(block-level box/inline-level box)
+Formatting context页面中的一块渲染区域，并且有一套渲染规则，它决定了其子元素将如何定位，以及和其他元素的关系和相互作用（BFC、IFC）
+ 
+BFC（块级格式化上下文）就是一个相对独立的布局环境，它内部元素的布局不受外面布局的影响
+一、BFC布局规则：
+内部的Box会在垂直方向，一个接一个地放置。
+Box垂直方向的距离由margin决定。属于同一个BFC的两个相邻Box的margin会发生重叠
+每个元素的margin box的左边， 与包含块border box的左边相接触(对于从左往右的格式化，否则相反)。即使存在浮动也是如此。
+BFC的区域不会与float box重叠。
+BFC就是页面上的一个隔离的独立容器，容器里面的子元素不会影响到外面的元素。反之也如此。
+计算BFC的高度时，浮动元素也参与计算
+ 
+二、哪些元素会生成BFC?
+根元素
+float属性不为none
+position为absolute或fixed
+display为inline-block, table-cell, table-caption, flex, inline-flex
+overflow不为visible
+多个相同元素设置中间间隔
+.el-tag + .el-tag { 
+margin-left: 10px;
+}
+ 
+超出文本点点点
+<span style="display:inline-block;width:100px; white-space:nowrap;text-overflow:ellipsis;overflow:hidden">嚯嚯嚯嚯嚯嚯嚯嚯嚯</span>
+ 
+flex布局
+设为Flex布局以后，子元素的float、clear和vertical-align属性将失效
+容器的属性
+以下6个属性设置在容器上。
+flex-direction
+flex-wrap
+flex-flow
+justify-content
+align-items
+align-content
+ 
+子元素（容器成员，称为Flex项目）：
+以下6个属性设置在项目上。
+order项目的排列顺序。数值越小，排列越靠前，默认为0。
+flex-grow定义项目的放大比例，默认为0，即如果存在剩余空间，也不放大
+flex-shrink项目的缩小比例，默认为1，即如果空间不足，该项目将缩小，0不缩小负值无效
+flex-basis分配多余空间之前，项目占据的主轴空间
+flex是flex-grow, flex-shrink 和 flex-basis的简写，默认值为0 1 auto。后两个属性可选
+align-self
+ 
+ 
+api
+2018年11月6日
+9:34
+ 
+ 
+扩展运算符，
+将一个数组转为用逗号分隔的参数序列  ...arr.slice(0)
+将一个对象转为用逗号分割的键值对
+ 
+JSON.stringify() 方法用于将 JavaScript 值转换为 JSON 字符串
+JSON.parse() 方法用于将一个 JSON 字符串转换为对象
+对象转换为字符串{}=>"[object Object]"
+怎么在对象数组外面加双引号JSON.stringify(arr)
+ 
+转义无非是两种情况：1：将普通字符转为特殊用途，一般是编程语言中，用于表示不能直接显示的字符，比如后退键，回车键，等。2：用来将特殊意义的字符转换回它原来的意义
+ 
+ 
+Vue.set(this.rulesContent, 'enum', []);
+ 
+Object.keys() 方法会返回一个由一个给定对象的自身可枚举属性组成的数组，数组中属性名的排列顺序和使用 for...in 循环遍历该对象时返回的顺序一致
+Object.getOwnPropertyNames(obj) 获取对象可遍历属性
+Object.keys方法，返回一个数组，成员是参数对象自身的（不含继承的）所有可遍历（ enumerable ）属性的键名
+Object.values方法返回一个数组，成员是参数对象自身的（不含继承的）所有可遍历（ enumerable ）属性的键值。
+Object.entries方法返回一个数组，成员是参数对象自身的（不含继承的）所有可遍历（ enumerable ）属性的键值对数组。
+var obj = { foo: 'bar', baz: 42 };
+Object.entries(obj)
+// [ ["foo", "bar"], ["baz", 42] ]
+Object.create方法的第二个参数添加的对象属性（属性p），如果不显式声明，默认是不可遍历的。Object.values不会返回这个属性。
+ 
+合并对象
+Object.assign(item, items); 合并对象
+或者
+this.form = { ...this.form,
+                            paramId: this.form.paramId,
+                            paramFullName: this.form.paramFullName,
+                            updateFlag: 0
+                        };
+解构赋值的拷贝是浅拷贝
+扩展运算符(...)用于取出参数对象的所有可遍历属性，拷贝到当前对象之中。这等同于使用Object.assign方法
+let z = {a:3,b:4};let n = {...z};n //{a:3,b:4}}等同于let z = {a:3,b:4};let n = Object.assign({},z);
+let ab = {...a,...b};//等同于//let ab = Object.assign({},a,b);
+如果用户自定义的属性，放在扩展运算符后面，则扩展运算符内部的同名属性会被覆盖掉
+如果把自定义属性放在扩展运算符前面，就变成了设置新对象的默认属性值。后面覆盖前面
+如果扩展运算符的参数是null或undefined，这个两个值会被忽略，不会报错。
+ 
+ 
+API：
+ 
+.Trim()移除字符串两侧空格
+substring( start ,stop) 提取字符串中字符
+返回的子串包括 start 处的字符，但不包括 stop 处的字符,第一位是0
+ 
+delete item[key];
+arr.push(item)
+ 
+字符串
+toUpperCase() 转为大写
+toLowerCase()转为小写
+ 
+JSON.stringify() 方法用于将 JavaScript 值转换为 JSON 字符串
+JSON.parse() 方法用于将一个 JSON 字符串转换为对象
+ 
+ 
+input 事件 
+oninput 事件在用户输入时触发，它是在元素值发生变化时立即触发
+change  事件要在 input 失去焦点的时候才会触发；
+ 
+ e.userId.toLowerCase().trim() == this.userId.toLowerCase().trim()
+ 
+substr() 方法可在字符串中抽取从 start 下标开始的指定数目的字符
+ 
+ 
+短路求值
+与（&&）运算符将会返回第一个false/‘falsy’的值。当所有的操作数都是true时，将返回最后一个表达式的结果。
+或（||）运算符将返回第一个true/‘truthy’的值。当所有的操作数都是false时，将返回最后一个表达式的结果。
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+时间API
+当前时间戳：
+第一种方法：
+var timestamp = Date.parse(new Date());日期的毫秒
+结果：1280977330000
+第二种方法：
+var timestamp = (new Date()).valueOf();
+结果：1280977330748
+第三种方法：
+var timestamp=new Date().getTime()；时间的毫秒
+结果：1280977330748
+第四种方法：
+var timestamp= Date.now();
+格式化时间戳
+new Date(timestamp).toLocaleString()
+console.time()与coneole.timeEnd()打印一段代码的运行时间
+var d = new Date()
+        d.setDate(d.getDate()+36)
+        d.toGMTString()//返回GMT时区时间
+        d.setTime(d.getTime() - 1);//使用时间戳设置时间
+        //返回的都是时间对象
+ 
+ 
+判断对象中是否具有某个属性
+ 
+ 
+ 
+ 
+不是按钮的如何禁用：按钮统一不适用禁用，而是点击提示
+click 判断后return函数
+if(this.product_id == ''){
+  this.$message('当前版本无' + this.selectType0);
+  return
+}
+ 
+getUUID: function () { //获取随机UUID
+var d = new Date().getTime();
+var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+var r = (d + Math.random() * 16) % 16 | 0;
+d = Math.floor(d / 16);
+return (c == 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+});
+return uuid;
+},
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+cookie
+2018年11月21日
+17:14 
+export function getCookie(name){
+var arr,reg=new RegExp("(^|)"+name+"=([^;]*)(;|$)");
+if(arr=document.cookie.match(reg))
+return (arr[2]);
+else 
+return null;
+}
+获取cookie要使用unescape()解码
+export function setCookie(c_name,value,expiredays){
+var expdate = new Date();
+if (window.navigator.userAgent.indexOf('Chrome') !== -1) {//chrome有时差8个时区
+expiredays = expiredays + 1/3;
+}
+expdate.setDate(expdate.getDate()+expiredays);
+document.cookie=c_name+"="+escape(value)+((expiredays==null)?"":";expires="+expdate.toGMTString());
+//document.cookie =" name = secape(value) ;expires = expdate"
+}
+设置cookie的value要使用escape()加密
+export function delCookie(name){
+var exp = new Date();
+exp.setTime(exp.getTime() - 1);
+var cval=getCookie(name);
+if(cval!=null) 
+document.cookie= name + "="+cval+";expires="+exp.toGMTString();
+}
+ 
+ 
+ 
+cookie要使用unescape() 函数解码使用 escape() 编码
+获取：document.cookie.match(reg)   this.arr = JSON.parse(unescape(getCookie(key))) || []
+设置：document.cookie = 'name =escape(value);sxpires = time'
+删除：document.cookie = 'name =escape(value);sxpires = time-1'
+ 
+ 
+cookie
+设置发送过程：
+客户端发送一个http请求到服务器端 服务器端发送一个http响应到客户端，其中包含Set-Cookie头部 客户端发送一个http请求到服务器端，其中包含Cookie头部 服务器端发送一个http响应到客户端
+客户端 （request header）-> 服务器 （response header）- > 客户端
+会话跟踪
+查看网站cookie 控制台 javascript:alert (document. cookie)
+ 
+中文属于Unicode字符，在内存中占4个字符，而英文属于ASCII字符，内存中只占2个字节。
+Cookie中使用Unicode字符时需要对Unicode字符进行编码，否则会乱码。
+如果值为二进制数据，则需要使用BASE64编码
+ 
+ 
+ 
+ 
+数组
+<<数组.txt>> 
+2018年11月21日
+17:37
+ 
+API
+indexOf() 方法用于查找元素在数组中第一次出现时的索引，如果没有，则返回-1。
+arr.indexOf(element, fromIndex=0)
+element 为需要查找的元素。
+fromIndex 为开始查找的位置，缺省默认为0。如果超出数组长度，则返回-1。如果为负值，假设数组长度为length，则从数组的第 length + fromIndex项开始往数组末尾查找，如果length + fromIndex<0 则整个数组都会被查找
+indexOf使用严格相等
+ 
+find() 返回数组中第一个满足条件的元素（如果有的话）， 如果没有，则返回undefined。
+findIndex()它返回数组中第一个满足条件的元素的索引（如果有的话）否则返回-1。
+语法：arr.find(fn, thisArg)，arr.findIndex(fn, thisArg)
+fn 表示在数组每一项上执行的函数，接受三个参数：
+value 当前正在被处理的元素的值
+index 当前元素的数组索引
+array 数组本身
+thisArg 可选，用来当做fn函数内的this对象
+arr.findIndex(function(value,index,array){
+ return value>5
+})
+arr.find(function(value, index, arr){
+    return value > 20;
+})
+arr.find(s=>{
+    return s > 20;
+})
+arr.find(s=> s > 20)
+ 
+ 
+to.matched.some( m => m.meta.auth)
+matched是匹配到的路由集合数组
+every() 方法使用传入的函数测试所有元素，只要其中有一个函数返回值为 false，那么该方法的结果为 false；如果全部返回 true，那么该方法的结果才为 true
+Some()方法使用传入的函数测试所有元素，只要有一个函数返回值为 true，则该方法返回 true，若全部返回 false，则该方法返回 false。
+var arr=[1,2,3,4,5]
+var b=arr.some(function(item){
+    console.log(item);
+    return item > 10;
+})
+console.log(b)  测试条件要是用return返回判断值
+ 
+splice() 方法向/从数组中添加/删除项目，然后返回被删除的元素组成的数组。会改变原数组
+Splice:
+Var a = [1,2,3]
+Var b = a.splice(2,1)
+a//[1,2]
+b//[3]
+更改原数组，返回更改值（删除的元素）
+arr.splice(start,deleteCount[, item1[, item2[, …]]])
+Slice()方法返回截取数组部分元素组成的新数组，不会改变原数组
+复制数组的小技巧 var arr1 = arr0.slice(0)
+arr.slice([start[, end]])
+ 
+ 
+filter()数组过滤 方法创建一个新的数组，新数组中的元素是通过检查指定数组中符合条件的所有元素,如果没有符合条件的元素则返回空数组,
+filter() 不会改变原始数组
+array.filter(function(currentValue,index,arr), thisValue)
+thisValue可选。对象作为该执行回调时使用，传递给函数，用作 "this" 的值。
+如果省略了 thisValue ，"this" 的值为 "undefined"
+var arr=[1,2,3,4,5];
+var a=3;
+var brr=arr.filter(function(item){
+    return item > a;
+})
+forEach() 方法用于调用数组的每个元素，并将元素传递给回调函数；返回值undefined
+ var crr=arr.forEach(function(item,index){
+     arr[index] = item + a
+})
+通过arr[index]改变原数组 不需要return
+map() 方法遍历数组，使用传入函数处理每个元素，并返回函数的返回值组成的新数组
+会改变原数组
+通过arr[index]改变原数组 需要return返回值组成新数组
+this.workstationsArray2 = this.workstationsArray.map(item => {//拿到工位辨别是否被占用
+                            if(workstationsArray1.indexOf(item)>-1){
+                                return {
+                                    label: item,
+                                    value: item,
+                                    disabled:true,
+                                }
+                            }else{
+                                return {
+                                    label: item,
+                                    value: item,
+                                    disabled:false,
+                                }
+                            }
+                        })
+reverse()倒置
+pop() 方法删除一个数组中的最后的一个元素，并且返回这个元素
+shift()方法删除数组的第一个元素，并返回这个元素
+unshift() 方法用于在数组开始处插入一些元素(就像是栈底插入)
+ 
+拼接数组
+Arr1.push(…brr)
+Arr1.concat(brr) 返回组成的新的数组
+ 
+ 
+排序
+sort()方法对数组元素进行排序，并返回这个数组，
+sort会改变原数组
+comparator(prop, fn) { //对象数组排序比较器
+                return function (a, b) {
+                    var x = a[prop];
+                    var y = b[prop];
+                    if (x === y) {
+                        return typeof fn === 'function' ? fn(a, b) : 0;
+                    } else {
+                        return x > y ? -1 : 1;
+                    }
+                }
+            },
+ 
+re.data.sort(this.comparator('groupName',this.comparator('paramId')))
+this.product_template = re.data.reverse();
+ 
+数字字符排序比较器
+规则字符串 MP1 MP2 MP10
+var reg =  /[^0-9]*/igm//把字符用0替换，数字字符串排序
+                    r.data.sort(function(a,b){
+                        let x = a.replace(reg,0)
+                        let y = b.replace(reg,0)
+                        return x-y;
+                    })
+ 
+ 
+ 
+ 
+遍历不定维数组使用函数自调方法：
+traverse(arr){
+                arr.forEach(item=>{
+                    let isExpend = this.treeExpendedArray.some(e=>{
+                        return e == item.id
+                    })
+                    if(isExpend){
+                        Vue.set(item,"isExpend",true)
+                    }else{
+                        Vue.set(item,"isExpend",false)
+                    }
+                    if(item.children.length>0){
+                        this.traverse(item.children)
+                    }
+                })
+            },
+ 
+ 
+ 
+ 
+对象数组排序比较器
+compare1(prop,fn){ 
+return function(a,b){
+var x=a[prop];
+var y=b[prop];
+if(x===y){
+return typeof fn ==='function'?fn(a,b):0;
+} else{
+return x>y?-1:1;
+}
+}
+},
+tableData.sort(this.compare1('assemblyType', this.compare1('bomCode', this.compare1(
+'workProcedure',this.compare1('stationCode'))))) 
+//数据排序，表格合并前处理
+ 
+            /*对象数组排序
+             * 数组按字段重排序
+             * 参数说明：条件之间用英文逗号隔开，同一组条件中字段与规则应该有一个空格隔开
+             * option:"id desc,name asc"与"id desc,name"效果相同，表示优先按id降序排列，其次按name升序排列
+     * 例如：this.arraySortBy(this.flowsDataByApply, "createdTime desc");
+             *
+             */
+            arraySortBy(array, option) {
+                if (array instanceof Array) { //只有当object是Array数组的时候才进行排序
+                    option = option || "";
+                    var option = option.split(",");
+                    for (var i = option.length - 1; i >= 0; i--) {
+                        var op = option[i];
+                        op = op.split(" ");
+                        if (op[0] != "") {
+                            if (typeof op[1] == "undefined" || (op[1] != "asc" && op[1] != "desc")) {
+                                op[1] = "asc";
+                            }
+                            var key = op[0];
+                            var method = op[1];
+                            if (method == 'asc') {
+                                array.sort(function (v1, v2) {
+                                    if (v1[key] < v2[key]) {
+                                        return -1;
+                                    } else if (v1[key] > v2[key]) {
+                                        return 1;
+                                    } else {
+                                        return 0;
+                                    }
+                                });
+                            } else {
+                                array.sort(function (v1, v2) {
+                                    if (v1[key] > v2[key]) {
+                                        return -1;
+                                    } else if (v1[key] < v2[key]) {
+                                        return 1;
+                                    } else {
+                                        return 0;
+                                    }
+                                });
+                            }
+                        }
+                    }
+                    return array;
+                } else {
+                    return array;
+                }
+            },
+ 
+对象数组遍历转换：
+let arr=[{a:'a'},{b:'b'},{c:'c'}]
+let obj={a:'a',b:'b',c:'c'}
+ 
+//遍历数组forEach，map等高级函数
+for(var i in arr){//这里的i是索引
+    console.log(i,arr[i])
+}
+for(var i of arr){//这里的i是元素
+    console.log(i)
+}
+ 
+//遍历对象
+for(var i in obj){
+    console.log(i,obj[i])
+}
+Object.keys(obj).forEach(item=>{
+    console.log(item,obj[item])
+})
+Object.getOwnPropertyNames(obj).forEach(item=>{
+    console.log(item,obj[item])
+})
+//数组转对象[]=>{,}
+var arrobj={}
+arr.forEach(item=>{
+    let key = Object.keys(item)[0]//如果有公有key直接使用item.key
+    arrobj[key]=item
+    arrobj={...arrobj,
+        // ...item,//一层对象数组
+    }
+})
+console.log(arrobj)
+//对象转数组{}=>[{},{}]
+var objarr=[]
+Object.keys(obj).forEach(item=>{
+    let o={}
+    o[item]=obj[item]//给对象赋值变量键值对
+    objarr.push(o)
+})
+console.log(objarr)
+ 
+ 
+ 
+整合对象数组总结：
+ 
+最后需要的结果：
+[
+{paramId:'',value_current:'',value_version1:'',value_version2:'',...},
+]
+获得数据是查询BOM版本下的参数信息返回
+[
+{paramId:'',param_value:'',}
+]
+整合过程：
+ 
+把BOM版本列表增加标识版本字段
+ 
+[
+{paramId:'p1',param_value:'',version:'',value_version1:'',},
+{paramId:'p2',param_value:'',version:'',value_version1:'',}
+]
+ 
+转换为依参数值为键名
+[
+{p1:{paramId:'p1',param_value:'',version:'',value_version1:''} }
+{p2:{paramId:'p2',param_value:'',version:'',value_version1:''} }
+]
+ 
+其他版本转换为：
+ 
+[
+{p1:{paramId:'p1',param_value:'',version:'',value_version2:''} }
+{p2:{paramId:'p2',param_value:'',version:'',value_version2:''} }
+]
+ 
+[
+{p1:{paramId:'p1',param_value:'',version:'',value_version3:''} }
+{p2:{paramId:'p2',param_value:'',version:'',value_version3:''} }
+]
+ 
+多版本同键名合并：
+ 
+[
+{p1:{paramId:'p1',param_value:'',version:'',value_version1:'',value_version2:'',value_version3:''}},
+{p2:{paramId:'p2',param_value:'',version:'',value_version1:'',value_version2:'',value_version3:''}}
+]
+ 
+把键值拿出来作为数组元素
+ 
+[
+{paramId:'p1',param_value:'',version:'',value_version1:'',value_version2:'',value_version3:''},
+{paramId:'p2',param_value:'',version:'',value_version1:'',value_version2:'',value_version3:''}
+]
+ 
+ 
+ 
+实现过程二：
+ 
+ 
+datasource={
+version1:{
+param1:{paramObj},
+param2:{paramObj},
+},
+version2:{
+param1:{paramObj},
+param2:{paramObj},
+}
+}
+ 
+combineData = {}
+ 
+values=Object.values(datasource[version1])
+values.forEach=>item
+item.value_version1=item.paramValue;
+combineData.param1={...combineData.param1,...item};
+combineData={
+param1:{...paramObj,value_version1:''},
+param2:{...paramObj,value_version1:''},
+}
+ 
+values=Object.values(datasource[version2])
+values.forEach=>item
+item.value_version2=item.paramValue;
+combineData.param1={...combineData.param1,...item}
+combineData={
+param1:{...paramObj,value_version1:'',value_version2:''},
+param2:{...paramObj,value_version1:'',value_version2:''},
+}
+ 
+Object.values(combineData)
+ 
+[
+{...paramObj,value_version1:'',value_version2:''},
+{...paramObj,value_version1:'',value_version2:''},
+]
+ 
+ 
+ 
+ 
+ 
+ 

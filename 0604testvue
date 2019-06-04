@@ -1,0 +1,916 @@
+DOM更新  vuex 路由与组件通信
+2018年11月3日
+15:37
+关于vue的DOM更新问题
+1通过直接更改对象属性或数组项是无法实现表格表单对应数据刷新
+1针对对象
+Obj.prop = value  无法实现，需使用
+Vue.set(obj,'prop',value)
+2针对数组，
+ arr[index] = value 无法实现，需使用
+Vue.set(arr,index,newValue)或者
+Arr.splice(index,1,newValue)
+ 
+使用nextTick
+ 
+1在Vue生命周期的created()钩子函数进行的DOM操作一定要放在Vue.nextTick()的回调函数中 此时回调会发生在mounted之后
+2在数据变化后要执行的某个操作，而这个操作需要使用随数据改变而改变的DOM结构的时候，这个操作都应该放进Vue.nextTick()的回调函数中
+3为了在数据变化之后等待 Vue 完成更新 DOM ，可以在数据变化之后立即使用Vue.nextTick(callback) 。这样回调函数在 DOM 更新完成后就会调用。打开弹窗，调用弹窗dom
+ 
+使用vuex传值三部
+1State:{paramValues }
+2mutations：{
+changeParamValues(state,val){
+state.paramValues = val;
+},
+3this.$store.commit('changeParamValues', this.rulesContent);
+4在组件中的data或者computed接受store：count:this.$store.state.count
+5在store中的其他位置引用state变量： state.username
+6使用actions的异步更改状态，三步骤：
+  mutations: {
+    add(state, n) {
+      state.count += n
+    }
+  },
+  actions: {
+    incrementAsyncWithValue (context, value) {
+      setTimeout(() => {
+        context.commit('add', value)
+      }, 1000)
+    }
+  },
+this.$store.dispatch('incrementAsyncWithValue', 5)
+ 
+ 
+ 
+ 
+1. state
+ 
+state就是全局的状态（数据源），我们可以用以下方式在Vue 组件中获得Vuex的state状态
+template
+  <div>
+    {{ $store.state.count }}
+  </div>
+ 
+script
+console.log(this.$store.state.count)
+ 
+2. getters
+ 
+getters其实可以认为是 store 的计算属性，用法和计算属性差不多。
+定义getter：
+  getters: {
+    done(state) {
+      return state.count + 5;
+    },
+  }
+ 
+使用getter
+console.log(this.$store.getters.done)
+ 
+3. mutations
+ 
+mutations是操作state的唯一方法，即只有mutations方法能够改变state状态值
+  mutations: {
+    // 提交载荷 Payload
+    add(state, n) {
+      state.count += n
+    }
+  },
+this.$store.commit('add', 10)
+ 
+这里只是传了一个数字，在大多数情况下，载荷应该是一个对象，这样可以包含多个字段并且记录的 mutation 会更易读。
+mutations方法必须是同步方法！
+为了处理异步方法，actions出现了,•Action 还是得通过 mutation 方法来修改state
+ 
+4. actions(三部，1定义mutations2定义action3组件分发)
+ 
+  mutations: {
+    // 提交载荷 Payload
+    add(state, n) {
+      state.count += n
+    }
+  },
+  actions: {
+    incrementAsyncWithValue (context, value) {
+      setTimeout(() => {
+        context.commit('add', value)
+      }, 1000)
+    }
+  },
+this.$store.dispatch('incrementAsyncWithValue', 5)
+ 
+ 
+context是与 store 实例具有相同方法和属性的对象。可以通过context.state和context.getters来获取 state 和 getters。
+ 
+问个vue渲染的问题：我在表单中使用后端返回的数据命名为：resForm:{}
+在页面去显示resForm.attachments.MainPackage.fileName
+结果控制台报错：TypeError；
+是因为对象多次嵌套出的问题么？
+在data中初始化；
+是不是因为使用this.resForm={...this.resForm} 的问题
+ 
+路由跳转传参数a跳到b
+1通过vuex传递
+a把要跳转的参数传递到store，b去store里拿这个数据
+2通过路由跳转传参实现
+a组件
+sendParams () {
+        this.$router.push({
+            path: 'yourPath', 
+            name: '要跳转的路径的 name,在 router 文件夹下的 index.js 文件内找',
+            params: { 
+                name: 'name', 
+                dataObj: this.msg
+            }
+            /*query: {
+                name: 'name', 
+                dataObj: this.msg
+            }*/
+        })
+      }
+ 
+b组件
+ methods: {
+      getParams () {
+        // 取到路由带过来的参数 
+        let routerParams = this.$route.params.dataobj
+        // 将数据放在当前组件的数据内
+        this.msg = routerParams
+      }
+    },
+    watch: {
+    // 监测路由变化,只要变化了就调用获取路由参数方法将数据存储本组件即可
+      '$route': 'getParams'
+    }
+ 
+ 
+router传参
+ 
+传递
+this.$router.push({
+  path: "/00",
+  query: {
+     ateName:transferProject.ateName,
+  }
+})
+接收
+最好在created中接受
+mounted(){
+var getQuery  = this.$route.query;
+this.ate_Name = getQuery.ateName.trim();
+}
+ 
+ 
+ 
+ 
+@mouseenter="enter" @mouseleave="leave"
+ 
+钩子函数
+beforeCreate 都拿不到
+created  拿得到this.$data和data数据，拿不到this.$el
+其余钩子都能到所有数据
+ 
+ 
+ 
+组件通信
+ 
+组件传参：
+访问父组件传递的参数 
+this.$parent.$refs.tree_pro.level
+使用this.$parent. 同进入父组件的this
+可以访问到父组件自定义的所有data数据及methods方法等
+$children是数组
+ 
+触发父组件clickHref事件
+this.$emit("clickHref", this.current_navs_index.join("")); 
+ 
+console.log("页面更新都会触发v-show执行内函数执行")
+<i v-show="isEnd(data)" class="el-icon-error" title="此节点不是末节点"></i>
+ 
+ 
+组件通信：父子组件
+复用组件接受父组件参数
+何时查询后台数据问题：
+如果是弹窗，父组件执行：
+      this.flowId=row.flowId
+      this.advancedsearchdetailvisible = true;
+      this.$nextTick(()=>{
+        this.$refs.flowInformation.getFlowDetail(this.flowId)
+      })
+如果路由跳转，在父组件mounted执行：
+this.flowId=this.$route.query.flowId
+this.$refs.flowInformation.getFlowDetail(this.flowId)
+ 
+ 
+ 
+AXIOS
+2018年11月16日
+18:23
+ 
+api配置
+import AXIOS from "axios";
+import {HostConfig as C} from "../config";
+export function submitSequence(model: any,fileId:string,updateBy:string) {
+const path = `${C.paramlibAddr}/api/v1/filetrans/savefile/string/${fileId}/${updateBy}`
+return AXIOS.post(path, model)
+}
+export function deleteParamApply(id: number) {
+const path = `${C.paramlibAddr}/api/v1/paramapply/deleteParamApply/${id}`
+return AXIOS.get(path);
+}
+引入api配置文件：
+Import * as ParamApplyOp from '../'
+调用接口
+ParamApplyOp.deleteParamApply(otherItem.tableId)
+ 
+ 
+更改请求头
+AXIOS.defaults.headers.post['Content-Type'] = 'application/json';//或者使用对象如下
+export function getSequence(model:any) {
+// const path = `${C.paramlibAddr}/api/v1/sequenceApply/getSequenceInfo`
+const path = `http://10.74.195.122:30072/api/v1/sequenceApply/getSequenceInfo`//苏学奋
+return AXIOS.post(path,model)
+// return AXIOS({
+// method: 'post',
+// url: path,
+// data: model,
+// headers: {"Content-Type":"application/json"}
+// })
+}
+ 
+api封装
+vue项目配置axios的api过程：
+定义拦截器-定义axios外部调用接口-定义方法api-全局引入绑定方法api-调用全局api方法
+定义拦截器axios.interceptors.request.use与axios.interceptors.response.use
+定义axios外部调用接口：axios({}).then()导出接口
+定义方法api：getTest (params, success, failure){filter.get(baseURL, url, params, success, failure)}
+全局引入绑定方法api：import api from './config/api'；Vue.prototype.$api = api
+调用全局api方法：this.$api.getName();this.$api.read.getName();
+ 
+ 
+ 
+ 
+ 
+axios封装
+axios(config)
+axios.get（url [，config]）
+ 
+{
+// `url`是将用于请求的服务器URL
+url: '/user',
+ 
+// `method`是发出请求时使用的请求方法
+method: 'get', // 默认
+ 
+// `baseURL`将被添加到`url`前面，除非`url`是绝对的。
+// 可以方便地为 axios 的实例设置`baseURL`，以便将相对 URL 传递给该实例的方法。
+baseURL: 'https://some-domain.com/api/',
+ 
+// `transformRequest`允许在请求数据发送到服务器之前对其进行更改
+// 这只适用于请求方法'PUT'，'POST'和'PATCH'
+// 数组中的最后一个函数必须返回一个字符串，一个 ArrayBuffer或一个 Stream
+ 
+transformRequest: [function (data) {
+// 做任何你想要的数据转换
+ 
+return data;
+}],
+ 
+// `transformResponse`允许在 then / catch之前对响应数据进行更改
+transformResponse: [function (data) {
+// Do whatever you want to transform the data
+ 
+return data;
+}],
+ 
+// `headers`是要发送的自定义 headers
+headers: {'X-Requested-With': 'XMLHttpRequest'},
+ 
+// `params`是要与请求一起发送的URL参数
+// 必须是纯对象或URLSearchParams对象
+params: {
+ID: 12345
+},
+ 
+// `paramsSerializer`是一个可选的函数，负责序列化`params`
+// (e.g. https://www.npmjs.com/package/qs, http://api.jquery.com/jquery.param/)
+paramsSerializer: function(params) {
+return Qs.stringify(params, {arrayFormat: 'brackets'})
+},
+ 
+// `data`是要作为请求主体发送的数据
+// 仅适用于请求方法“PUT”，“POST”和“PATCH”
+// 当没有设置`transformRequest`时，必须是以下类型之一：
+// - string, plain object, ArrayBuffer, ArrayBufferView, URLSearchParams
+// - Browser only: FormData, File, Blob
+// - Node only: Stream
+data: {
+firstName: 'Fred'
+},
+ 
+// `timeout`指定请求超时之前的毫秒数。
+// 如果请求的时间超过'timeout'，请求将被中止。
+timeout: 1000,
+ 
+// `withCredentials`指示是否跨站点访问控制请求
+// should be made using credentials
+withCredentials: false, // default
+ 
+// `adapter'允许自定义处理请求，这使得测试更容易。
+// 返回一个promise并提供一个有效的响应（参见[response docs]（＃response-api））
+adapter: function (config) {
+/* ... */
+},
+ 
+// `auth'表示应该使用 HTTP 基本认证，并提供凭据。
+// 这将设置一个`Authorization'头，覆盖任何现有的`Authorization'自定义头，使用`headers`设置。
+auth: {
+username: 'janedoe',
+password: 's00pers3cret'
+},
+ 
+// “responseType”表示服务器将响应的数据类型
+// 包括 'arraybuffer', 'blob', 'document', 'json', 'text', 'stream'
+responseType: 'json', // default
+ 
+//`xsrfCookieName`是要用作 xsrf 令牌的值的cookie的名称
+xsrfCookieName: 'XSRF-TOKEN', // default
+ 
+// `xsrfHeaderName`是携带xsrf令牌值的http头的名称
+xsrfHeaderName: 'X-XSRF-TOKEN', // default
+ 
+// `onUploadProgress`允许处理上传的进度事件
+onUploadProgress: function (progressEvent) {
+// 使用本地 progress 事件做任何你想要做的
+},
+ 
+// `onDownloadProgress`允许处理下载的进度事件
+onDownloadProgress: function (progressEvent) {
+// Do whatever you want with the native progress event
+},
+ 
+// `maxContentLength`定义允许的http响应内容的最大大小
+maxContentLength: 2000,
+ 
+// `validateStatus`定义是否解析或拒绝给定的promise
+// HTTP响应状态码。如果`validateStatus`返回`true`（或被设置为`null` promise将被解析;否则，promise将被
+  // 拒绝。
+validateStatus: function (status) {
+return status >= 200 && status < 300; // default
+},
+ 
+// `maxRedirects`定义在node.js中要遵循的重定向的最大数量。
+// 如果设置为0，则不会遵循重定向。
+maxRedirects: 5, // 默认
+ 
+// `httpAgent`和`httpsAgent`用于定义在node.js中分别执行http和https请求时使用的自定义代理。
+// 允许配置类似`keepAlive`的选项，
+// 默认情况下不启用。
+httpAgent: new http.Agent({ keepAlive: true }),
+httpsAgent: new https.Agent({ keepAlive: true }),
+ 
+// 'proxy'定义代理服务器的主机名和端口
+// `auth`表示HTTP Basic auth应该用于连接到代理，并提供credentials。
+// 这将设置一个`Proxy-Authorization` header，覆盖任何使用`headers`设置的现有的`Proxy-Authorization` 自定义 headers。
+proxy: {
+host: '127.0.0.1',
+port: 9000,
+auth: : {
+username: 'mikeymike',
+password: 'rapunz3l'
+}
+},
+ 
+// “cancelToken”指定可用于取消请求的取消令牌
+// (see Cancellation section below for details)
+cancelToken: new CancelToken(function (cancel) {
+})
+}
+ 
+ 
+全局axios默认值
+axios.defaults.baseURL = 'https://api.example.com';
+axios.defaults.headers.common['Authorization'] = AUTH_TOKEN;
+axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
+ 
+实例默认值
+//在创建实例时设置默认值
+var instance = axios.create（{
+   baseURL：'https://api.example.com'
+}）;
+//在实例创建后改变默认值
+instance.defaults.headers.common ['Authorization'] = AUTH_TOKEN;
+ 
+优先级：请求config参数>实例default>全局default
+ 
+ 
+拦截器
+ 
+截取请求或响应在被 then 或者 catch 处理之前
+//添加请求拦截器
+axios.interceptors.request.use（function（config）{
+     //在发送请求之前做某事
+     return config;
+   }，function（error）{
+     //请求错误时做些事
+     return Promise.reject（error）;
+   }）;
+ 
+//添加响应拦截器
+axios.interceptors.response.use（function（response）{
+     //对响应数据做些事
+     return response;
+   }，function（error）{
+     //请求错误时做些事
+     return Promise.reject（error）;
+   }）;
+ 
+拦截器添加到实例
+var instance = axios.create();
+instance.interceptors.request.use(function () {/*...*/});
+ 
+删除拦截器
+var myInterceptor = axios.interceptors.request.use(function () {/*...*/});
+axios.interceptors.request.eject(myInterceptor);
+ 
+ 
+ 
+配置axios的拦截器：interceptor_index.js
+/**
+ * 拦截器
+ * */
+import axios from 'axios'
+import store from '@/store/store'
+import * as types from '@/store/types'
+import router from '@/router'
+ 
+// http request 拦截器
+axios.interceptors.request.use(
+  config => {
+    if (store.state.token) {
+      config.headers.Authorization = `token ${store.state.token}`
+    }
+    return config
+  },
+  err => {
+    return Promise.reject(err)
+  }
+)
+// http response 拦截器
+axios.interceptors.response.use(
+  response => {
+    return response
+  },
+  error => {
+    if (error.response) {
+      switch (error.response.status) {
+        case 401:
+          // 401 清除token信息并跳转到登录页面
+          console.log('拦截了')
+          store.commit(types.LOGOUT)
+          // 只有在当前路由不是登录页面才跳转
+          router.currentRoute.path !== 'login' &&
+            router.replace({
+              path: 'login',
+              query: { redirect: router.currentRoute.path }
+            })
+      }
+    }
+    // console.log(JSON.stringify(error));//console : Error: Request failed with status code 402
+    return Promise.reject(error.response.data)
+  }
+)
+ 
+export default axios
+ 
+ 
+配置axios的api函数filter_index.js
+// 引用axios
+var axios = require('axios')
+// import axios from '@/interceptor'//拦截器
+// 自定义判断元素类型JS
+function toType (obj) {
+  return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase()
+}
+// 参数过滤函数
+function filterNull (o) {
+  for (var key in o) {
+    if (o[key] === null) {
+      delete o[key]
+    }
+    if (toType(o[key]) === 'string') {
+      o[key] = o[key].trim()
+    } else if (toType(o[key]) === 'object') {
+      o[key] = filterNull(o[key])
+    } else if (toType(o[key]) === 'array') {
+      o[key] = filterNull(o[key])
+    }
+  }
+  return o
+}
+/*
+  接口处理函数
+  这个函数每个项目都是不一样的，我现在调整的是适用于
+  https://cnodejs.org/api/v1 的接口，如果是其他接口
+  需要根据接口的参数进行调整。参考说明文档地址：
+  https://cnodejs.org/topic/5378720ed6e2d16149fa16bd
+  主要是，不同的接口的成功标识和失败提示是不一致的。
+  另外，不同的项目的处理方法也是不一致的，这里出错就是简单的alert
+*/
+ 
+function apiAxios (method, baseURL, url, params, success, failure) {
+  if (params) {
+    params = filterNull(params)
+  }
+  axios({
+    method: method,
+    url: url,
+    data: method === 'POST' || method === 'PUT' || method === 'DELETE' ? params : null,
+    params: method === 'GET' ? params : null,
+    baseURL: baseURL,
+    withCredentials: false,
+    timeout: 5000
+  })
+    .then(function (res) {
+      if (res.data.status === 1 || res.data.value === '0') {
+        // res.data.value为工序管控，上板前检测，value为'0'相当于status等于1
+        if (success) {
+          success(res.data)
+        }
+      } else {
+        if (failure) {
+          failure(res.data)
+        } else {
+          // window.alert('error: ' + JSON.stringify(res.data))
+          console.log('error: ' + JSON.stringify(res.data))
+        }
+      }
+    })
+}
+ 
+// 外部调用接口
+export default {
+  get: function (baseURL, url, params, success, failure) {
+    return apiAxios('GET', baseURL, url, params, success, failure)
+  },
+  post: function (baseURL, url, params, success, failure) {
+    return apiAxios('POST', baseURL, url, params, success, failure)
+  },
+  put: function (baseURL, url, params, success, failure) {
+    return apiAxios('PUT', baseURL, url, params, success, failure)
+  },
+  delete: function (baseURL, url, params, success, failure) {
+    return apiAxios('DELETE', baseURL, url, params, success, failure)
+  }
+}
+ 
+ 
+调整 main.js 绑定 api/index.js 文件
+// 引用API文件
+import api from './api/index.js'
+// 将API方法绑定到全局
+Vue.prototype.$api = api
+ 
+组件开发中调用api
+//组件中直接通过this.$api调用
+this.$api.get('topics', null, r => {
+      console.log(r)
+    })
+ 
+ 
+ 
+接口为get/api/v1/sequenceApply/downloadFile
+参数  /?id=${id}
+接口GET /api/v1/project/getProjectInfo/{productName}
+参数
+/${fileId} 或model
+ 
+请求本地文件数据
+var url = '/dist/static/OperationHelp.md';
+        Axios.get(url).then(res =>{
+            this.content = res.data;
+            this.$nextTick(()=>{
+                this.init();
+            })
+        })
+ 
+ 
+文件上传+配置请求头
+ 
+export function importParamFile(file:any,stageId:any){
+    const path=`${url}/api/v1/quota/stage/import?stageId=${stageId}`
+    var formData = new FormData();
+    formData.append('file',file)
+    var config={
+        headers:{'Content-Type':'multipart/form-data'}
+    }
+    return AXIOS.post(path,formData,config);
+}
+ 
+ 
+ 
+ 
+ 
+调试
+2018年11月21日
+11:10
+手动js中打断点
+Debugger
+ 
+右键在隐身窗口中打开
+ 
+ 
+调试过程，
+1 sources找到对应行代码，打断，刷新，F10逐行调试 F8？？
+ 
+后台返回500，查看preview 的message
+ 
+vue文件的断点调试，不是在dist里面的文件
+而是在webpack中的vue文件，函数里面
+ 
+ 
+插件
+2018年11月22日
+14:07
+ 
+Vuex
+Store.js
+import Vue from 'vue';
+import Vuex from 'vuex';
+Vue.use(Vuex)
+const store=new Vuex.Store(
+{
+State:{},
+Getters:{
+Get(state){}
+},
+Mutations:{
+Fn(state,val){}
+},
+Actions:{}
+}
+)
+export default store;
+Main,js
+import store from './store/store.js'
+new Vue({
+router,
+store,
+el: "#v-app",
+render: h => h(App)
+})
+其他组件中
+import store from '../store/store.js'
+userId: this.$store.state.username,
+ 
+Axios
+ 
+import AXIOS from 'axios'
+import { HostConfig as C } from '../config'
+AXIOS.defaults.withCredentials = true;
+export function checkUserLogin(model:any) {
+const path = `${C.paramlibAddr}/api/v1/right/login`
+return AXIOS.post(path,model);
+}
+ 
+ 
+Element-ui
+Main.js
+import Vue from 'vue'
+import ElementUI from 'element-ui'
+import 'element-ui/lib/theme-chalk/index.css';
+Vue.use(ElementUI)
+ 
+ 
+ 
+Bootstrap:
+Main.js
+import 'bootstrap/dist/css/bootstrap.min.css'
+ 
+Vue-router
+Main.js
+import Vue from 'vue'
+import VueRouter from 'vue-router'
+Vue.use(VueRouter)
+const router = new VueRouter({
+routes: [
+ 
+]
+})
+new Vue({
+router,
+store,
+el: "#v-app",
+render: h => h(App)
+})
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+:class="{checkList2:true或false}"
+ 
+给对象添加新的属性并赋值
+obj['newProp'] = value
+如果添加的属性是变量，不用加引号 obj[newProp] = value
+给对象item1增加新对象item2的所有属性
+Object.assign(item1, item2);
+ 
+ 
+项目运行及问题报错
+2018年11月27日
+10:16
+ 
+添加项目插件
+Npm install
+transmitRadio" was assigned to but it has no setter.
+computed: {
+            transmitRadio:{//判断是否可以转审
+                get:function(){
+                    if(this.variableUsers_approvers.length>=1){
+                        return false
+                    }else{
+                        return true
+                    }
+                },
+                set:function(){},
+            },
+ 
+ 
+编译报错
+1. cmd是否已管理员权限运行
+2. npm版本是否足够高，升级使用npm -g update npm@3.10.10
+3. 8080端口是否被占用
+4. 当前操作目录是否在项目根目录
+ 
+查看具体错误信息：
+ 
+lesten eaddrinuse :8080 端口被占用
+ 
+CALL_AND_RETRY Allocation failed - JavaScript heap out of memory
+记录Vue打包或保存频繁内存溢出情况,项目太大，导致内存溢出
+内存溢出 
+配置Nodejs运行内存  "dev": "node --max-old-space-size=4096 build/dev-server.js"
+全局安装increase-memory-limit 执行:  npm install -g increase-memory-limit
+进入工程目录，执行：increase-memory-limit
+ 
+上线了是否还有内存溢出？
+ 
+ 
+语法
+2019年2月11日
+15:16
+ 
+v-loading="loading"
+ 
+ 
+v-for
+v-for="(item ,index) in items" 
+v-for="(value, key, index) in object"
+object:{ name:'name1',k:'k1'} 
+value:name1;key:name;index:0;
+value:k1;key:k;index:1
+把对象每个键值对看做数组元素
+ 
+属性绑定：
+<div :class="['d1',{'d2':isd2}]">div内容</div>
+:style="{height: heightData}"
+ 
+ 
+True和false属性值：
+属性true和false的赋值，必须使用v-bind
+:inline="true"
+ 
+传递Number        :context="10" 
+传递字符        context="10"
+Data 可以定义数据类型：testcontext:Number,
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+<style scope>中的样式
+1仅作用于当前组件
+2仅对自定义元素有效
+3对内部的引用组件整体有效，组件内部无效
+如对dialog整体有效但对dialog的header或body无效
+需要在外面使用单独的style去设置dialog的header和body样式
+<style>中的样式
+1不仅对当前组件有效，而且会作用在其他组件
+ 
+如何对组件内部引用组件设置单独的样式：
+如对某组件内的collapse组件设置header但不让作用于其他组件
+1在style中添加
+2给父级元素添加类名限制
+如：.mark .el-collapse-item_header{}只会作用到mark下面的引用组件header元素
+监听
+深度监听对象内部的属性
+1使用deep:true 深度监听
+2使用computed做中间层，然后浅监听
+ 
+watch: {
+msg: {
+handler(newValue, oldValue) {
+console.log(newValue)
+},
+deep: true
+}
+}
+如果监听对象内的某一具体属性，可以通过computed做中间层来实现
+computed: {
+channel() {
+return this.msg.channel
+}
+},
+watch:{
+channel(newValue, oldValue) {
+console.log('new: %s, old: %s', newval, oldVal)
+}
+}
+ 
+ 
+双向绑定与响应式
+2019年3月12日
+11:30
+ 
+双向绑定与响应式
+发布者-订阅者模式(Backbone.js): 一般通过sub, pub的方式实现数据和视图的绑定监听，更新数据方式通常做法是 vm.set('property', value)。
+数据劫持(Vue.js): 通过Object.defineProperty()来劫持各个属性的setter，getter，在数据变动时发布消息给订阅者，触发相应的监听回调
+ 
+改变一个对象属性将隐式调用getter/setter,再次通知观察者，然后触发重新渲染
+把一个普通 JavaScript 对象传给 Vue 实例的 data 选项，Vue 将遍历此对象所有的属性，并使用 Object.defineProperty 把这些属性全部转为 getter/setter
+Object.defineProperty(person2, 'fullName', {
+    get: function () {
+        return `${this.firstName} ${this.lastName}`;
+    },
+});
+参数介绍:
+第一个参数：目标对象
+第二个参数：需要定义的属性或方法的名字。
+第三个参数：目标属性所拥有的特性。
+ 
+value：属性的值。
+writable：如果为false，属性的值就不能被重写,只能为只读了。
+configurable：总开关，一旦为false，就不能再设置他的（value，writable，configurable）。
+enumerable：是否能在for...in循环中遍历出来或在Object.keys中列举出来。
+get：见下面例子。
+set：见下面例子。
+Object.defineProperty(userInfo, "introduce", {
+    get: function() {
+        return document.getElementById('introduce').innerHTML;
+    },
+    set: function(introduce) {
+        document.getElementById('introduce').innerHTML = introduce;
+    }
+});
+ 
+不能同时设置访问器 (get 和 set) 和 wriable 或 value
+数据属性
+[[Configurable]]:表示能否修改属性。默认值为true
+[[Enumerable]]:表示属性是否可枚举,也就是是否可以通过for-in循环返回属性。默认值为true
+[[Writable]]:表示能否修改属性的值。默认值为true
+[[value]]:包含这个属性的值.读取属性的时候就是通过这里开始读。默认值为undefined
+ 
+访问器属性
+[[Configurable]]：表示能否修改属性。默认值为true
+[[Enumerable]]：表示属性是否可枚举,也就是是否可以通过for-in循环返回属性。默认值为true
+[[Get]]：在读取属性时调用的函数,默认值为undefined
+[[Set]]：在设置属性的时候调用的函数,默认值为undefined

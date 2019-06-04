@@ -1,0 +1,953 @@
+tomcat使用
+2019年5月13日
+17:50
+ 
+1.	Tomcat简介
+Web应用服务器
+目录结构：
+|-bin: 存放tomcat的命令。
+catalina.bat 命令：
+可以查看Tomcat服务启动时的状态，一般用于出现Tomcat启动
+来调试用的
+        使用方法：cmd-->定位到Tomcat目录的bin目录，在控制行中输入catalina.bat start
+ startup.bat  -> catalina.bat start
+shutdown.bat - > catalina.bat stop
+ |- conf: 存放tomcat的配置信息。其中server.xml文件是核心的配置文件。
+|-lib：支持tomcat软件运行的jar包。其中还有技术支持包，如servlet，jsp
+|-logs：运行过程的日志信息
+|-temp: 临时目录
+|-webapps： 共享资源目录。web应用目录。（注意不能以单独的文件进行共享）
+|-work： tomcat的运行目录。jsp运行时产生的临时文件就存放在这里
+1    Web应用的目录结构
+|- WebRoot :   web应用的根目录
+|- 静态资源（html+css+js+image+vedio）
+|- WEB-INF ： 固定写法。
+|-classes： （可选）固定写法。存放class字节码文件
+|-lib： （可选）固定写法。存放jar包文件。
+|-web.xml    配置文件
+ 注意：
+1）WEB-INF目录里面的资源不能通过浏览器直接访问
+2）如果希望访问到WEB-INF里面的资源，就必须把资源配置到一个叫web.xml的文件中
+2    工具开发web项目
+1）创建web project （javaweb工程）
+2）在WebRoot下建立静态资源文件，
+3）在src下建立动态资源文件
+  3.1 new -> Servlet( servlet的代码生成器)
+  3.2 写pacakge  -> class名 -> 修改mapping  url
+4）关联tomcat服务器
+    4.1 window-> Preferences - > MyEcplise -> servers -> Tomcat 6.x (注意一定要enable)
+5）部署web project应用。（拷贝web应用到tomcat的webapps目录下）
+6）启动tomcat服务器
+7）访问servlet
+http://localhost:8081/day08_web/hello
+2.	Tomcat使用：
+1.	Tomcat服务器端口的配置
+启动：startup.bat：
+ startup.bat会调用catalina.bat,而catalina.bat会调用setclasspath.bat，setclasspath.bat会使用JAVA_HOME环境变量（所以要配置）
+关闭：shutdown.bat
+  关闭时候不要点启动界面的×去关闭(相当于以拔电源方式关电脑)，而是点击shutdown.bat去关闭（相当于正常电脑关机）
+配置：
+如果想修改Tomcat服务器的启动端口，则可以在server.xml配置文件中的Connector节点进行的端口修改，在Host节点进行域名修改
+二、Tomcat服务器虚拟目录的映射方式
+Web应用开发好后，若想供外界访问，需要把web应用所在目录交给web服务器管理，这个过程称之为虚似目录的映射
+tomcat服务器会自动管理webapps目录下的所有web应用，并把它映射成虚似目录。换句话说，tomcat服务器webapps目录中的web应用，外界可以直接访问。
+例如：把F盘下的JavaWebDemoProject这个JavaWeb应用直接copy到tomcat服务器webapps目录中，此时Tomcat服务器就会自动为JavaWebDemoProject这个JavaWeb应用映射一个同名的虚拟目录"/JavaWebDemoProject"，
+然后就可以使用浏览器访问这个JavaWeb应用的资源了
+三、配置虚似主机就是配置一个网站。
+在Tomcat服务器配置一个虚拟主机(网站)，需要修改conf文件夹下的server.xml这个配置文件，使用Host元素进行配置，打开server.xml，可以看到Tomcat服务器自带的一个名称为localhost的虚拟主机(网站)，
+平时我们将开发好的JavaWeb应用放到webapps文件夹下，然后就可以使用"http://localhost:端口号/JavaWebAppName"的方式去访问了，其实访问的就是name是"localhost"的那台虚拟主机(Host)，这台虚拟主机管理
+webapps文件夹下的所有web应用。
+<Host name="localhost"  appBase="webapps"
+            unpackWARs="true" autoDeploy="true">
+appBase="webapps"，这里的JavaWebApps文件夹代表的不是一个项目的根目录，而是一个存放了一个或者多个JavaWeb应用的文件夹
+虚拟主机的ip是本机ip为什么外部用户可以访问？互联网上的DNS服务器注册访问网站时使用的域名（如果不注册是不是只能通过IP访问）
+tomcat要在生产环境的机器上去启动，然后部署，如果是在自己电脑上面关闭后其他人是无法访问的
+四、浏览器与服务器交互的过程
+浏览器的地址栏中输入URL地址"http://www.gacl.cn:8080/JavaWebDemo1/1.jsp"
+1、浏览器根据主机名"www.gacl.cn"去操作系统的Hosts文件中查找主机名对应的IP地址。
+2、浏览器如果在操作系统的Hosts文件中没有找到对应的IP地址，就去互联网上的DNS服务器上查找"www.gacl.cn"这台主机对应的IP地址。
+3、浏览器查找到"www.gacl.cn"这台主机对应的IP地址后，就使用IP地址连接到Web服务器。
+4、浏览器连接到web服务器后，就使用http协议向服务器发送请求，发送请求的过程中，浏览器会向Web服务器以Stream(流)的形式传输数据，告诉Web服务器要访问服务器里面的哪个Web应用下的Web资源
+5、浏览器做完上面4步工作后，就开始等待，等待Web服务器把自己想要访问的1.jsp这个Web资源传输给它。
+6、服务器接收到浏览器传输的数据后，开始解析接收到的数据，服务器解析"GET /JavaWebDemo1/1.jsp HTTP/1.1"里面的内容时知道客户端浏览器要访问的是JavaWebDemo1应用里面的1.jsp这个Web资源，然后服务器
+就去读取1.jsp这个Web资源里面的内容，将读到的内容再以Stream(流)的形式传输给浏览器
+7、浏览器拿到服务器传输给它的数据之后，就可以把数据展现给用户看了
+3.	Tomcat在Windows上安装
+对很多刚踏入岗位实习生，对于配置Tomcat也许有些头疼，所以对Tomcat在Windows上的安装配置做一个整理，有不合理的地方大家多多指正。
+首先检查jdk是否安装成功
+打开CMD，输入java –version，出现相应的信息则说明安装jdk
+ 
+查看是否配置了JAVA_HOME
+打开CMD，输入set java_home
+ 
+如果没配置JAVA_HOME
+则打开环境变量进行配置（计算机=>右键=>属性=>高级系统设置=>高级=>环境变量=>系统变量）
+ 
+ 
+再看CLASSPATH是否配置，没有就配置上
+变量名CLASSPATH
+变量值.,%JAVA_HOME%\lib\tools.jar;%JAVA_HOME%\lib\dt.jar;
+ 
+ 
+ 
+假设jdk成功安装
+下面进行tomcat的安装配置
+解压相应的tomcat包，放在你自己指定的路径，我这里用的tomcat8，解压后放到D:\program\java\apache-tomcat-8.0.37这个路径
+ 
+ 
+ 
+然后Tomcat环境的相应配置
+打开环境配置（计算机=>右键=>属性=>高级系统设置=>高级=>环境变量=>系统变量）
+在系统变量的Path下，其变量值的末尾加入tomcat安装目录的bin目录，
+我的是D:\program\java\apache-tomcat-8.0.37\bin
+ 
+注意看前面是否有（英文的分号；）没有就加上 
+ 
+接下来配置CATALINA_HOME
+点新建，变量名未CATALINA_HOME，变量值为你的tomcat的安装路径
+我的是D:\program\java\apache-tomcat-8.0.37
+ 
+到这儿就差不多完成了
+然后打开安装的bin目录，双击startup.bat
+ 
+如果没启动成功，出现一个黑框一闪而过
+ 
+用记事本打开这两个文件分别都
+在@echo off后面加入
+SET JAVA_HOME=jdk安装路径
+SET CATALINA_HOME=Tomcat安装路径
+我的是
+SET JAVA_HOME=D:\program\java\jdk1.8.0_25
+SET CATALINA_HOME=D:\program\java\apache-tomcat-8.0.37
+ 
+保存，然后双击双击startup.bat
+ 
+启动成功了
+打开浏览器，输入http://localhost:8080/
+出现下面界面说明安装配置成功
+ 
+ 
+ 
+Tomcat配置文件
+web应用程序文件放到webapps/ROOT下面
+server.xml配置文件：
+<?xml version="1.0" encoding="UTF-8"?>
+<Server port="8005" shutdown="SHUTDOWN">                    （服务器）tomcat实例
+  <Listener className="org.apache.catalina.startup.VersionLoggerListener" />        监听器
+  <Listener className="org.apache.catalina.core.AprLifecycleListener" SSLEngine="on" />
+  <Listener className="org.apache.catalina.core.JreMemoryLeakPreventionListener" />
+  <Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener" />
+  <Listener className="org.apache.catalina.core.ThreadLocalLeakPreventionListener" />
+  <GlobalNamingResources>                            全局JNDI资源
+    <Resource name="UserDatabase" auth="Container"                定义JNDI数据源
+              type="org.apache.catalina.UserDatabase"
+              description="User database that can be updated and saved"
+              factory="org.apache.catalina.users.MemoryUserDatabaseFactory"
+              pathname="conf/tomcat-users.xml" />
+  </GlobalNamingResources>
+  <Service name="Catalina">                            （服务）包含一个或多个Connector和一个Engine的服务组件
+    <Connector port="8080" protocol="HTTP/1.1"                    （连接器）代表一个接受客户端请求的连接器，通常指的是接收客户发来请求的位置及服务器端分配的端口
+               connectionTimeout="20000"
+               redirectPort="8443" />
+    <Connector port="8009" protocol="AJP/1.3" redirectPort="8443" />
+    <Engine name="Catalina" defaultHost="localhost">                （引擎）代表一个servlet实例，用于处理Connector接受并传递过来的请求，它检查每一个请求的HTTP首部信息以辨别此请求应该发往哪个host或context，并将请求处理后的结果返回的相应的客户端
+      <Realm className="org.apache.catalina.realm.LockOutRealm">
+        <Realm className="org.apache.catalina.realm.UserDatabaseRealm"
+               resourceName="UserDatabase"/>
+      </Realm>
+ 
+      <Host name="localhost"  appBase="webapps"                    （主机）嵌套在Engine中的元素，代表一个虚拟主机，一个Engine可以有多个Host，创建appBase目录，并且tomcat虚拟主机中的每个应用程序都是单独放在一个目录内，因此创建ROOT目录,
+            unpackWARs="true" autoDeploy="true">                    （上下文Context）web应用程序，配置一个Context最主要的是指定Web应用程序的根目录，以便Servlet容器能够将用户请求发往正确的位置
+        <Valve className="org.apache.catalina.valves.AccessLogValve" directory="logs"    （阀门）用来拦截请求并在将其转至目标之前进行某种处理操作
+               prefix="localhost_access_log" suffix=".txt"
+               pattern="%h %l %u %t &quot;%r&quot; %s %b" />
+      </Host>
+    </Engine>
+  </Service>
+</Server>
+ 
+该配置文件中的元素都是大写字母开头
+Server
+配置文件中的顶层元素，代表一个tomcat实例，并且配置文件中仅能有一个Server。
+ 
+属性    备注    属性值
+classname    实现server的类名    
+port    接受关闭tomcat请求的端口，仅能绑定至127.0.0.1    8005
+shutdown    定义关闭tomcat的字符串指令    SHUTDOWN
+Listener
+表示一个事件的监听器
+GlobalNamingResources
+全局JNDI资源
+Resource
+定义JNDI数据源
+Service
+包含一个或多个Connector和一个Engine的服务组件。属性name表示该Service的名称，默认保持 Catalina即可。<Service>...</Service>中可以嵌套Connector元素和Engine元素
+Connector
+代表一个接受客户端请求的连接器
+Engine
+代表一个servlet实例，用于处理Connector接受并传递过来的请求。
+ 
+属性    备注    属性值
+name    定义Engine的名称    Catalina
+defaultHost    定义Engine的默认虚拟主机    默认为localhost
+jvmRoute    应用于tomcat集群中的session共享，会在一次会话中添加该值，获得session sticky    ---
+Host
+嵌套在<Engine name="Catalina" defaultHost="localhost"> ... </Engine>中的元素，代表一个虚拟主机，一个Engine可以有多个Host。
+ 
+属性    备注    属性值
+name    虚拟主机名
+appBase    虚拟主机的站点根目录    webapps
+unpackWARs    tomcat是否解开WAR归档文件，默认为true，自动解开    true或false
+autoDeploy    是否自动部署追加到根目录下的新应用程序，默认为true    true或false
+Realm
+访问应用程序的时候需要安全认证，即需要输入用户和用户密码，Realm就是指定存储验证信息（用户和用户密码）的数据源。
+ 
+<Realm className="org.apache.catalina.realm.UserDatabaseRealm"
+               resourceName="UserDatabase"/>
+表示通过UserDatabaseRealm的方式获取验证信息，并且该数据源为GlobalNamingResources元素定义的全局JNDI资源UserDatebase。Realm元素嵌套的位置代表验证的范围，例如嵌套在Engine中，则Engine中所有的Host虚拟主机都共用这个认证信息。嵌套在Host中，则Host中所有的应用程序都共用这个认证信息。嵌套在Context中，则该应用程序使用这个认证信息。
+Valve
+可以嵌套在Engine、Host、Context元素中的组件，不同的类型可以实现特定的功能，例如AccessLogValve可以实现生成访问日志的功能，RemoteAddrValve可以实现控制远程IP地址的访问。
+Context
+嵌套在Host中的元素，代表某个虚拟主机中的应用程序
+属性    备注
+docBase    对应的web应用程序的目录
+path    指定该应用程序映射为服务器根目录的URI路径，即host+path
+reloadable    是否重新加载web应用程序类，默认为false
+注：tomcat虚拟主机中的每个应用程序必须单独存在一个目录中，docBase可以使用相对路径和绝对路径，相对路径是相对于Host虚拟主机的appBase目录。
+如果path属性值为空字符串，则表示该应用程序为根web应用，即ROOT目录(默认docBase配置的路径为跟web应用)
+ 
+ 
+ 
+ 
+ 
+正向代理的代理对象是客户端,反向代理的代理对象是服务端。
+tomcat在处理静态资源的时候性能并不是很好，在tomcat的前端加一个Nginx反向代理，Nginx接受用户发来的Web请求，当请求的是静态资源的时候，Nginx自己处理，当请求的动态资源的时候，则Nginx将请求代理到后面的tomcat实例。这样来实现tomcat的性能最大化。
+ 
+ 
+应用程序的目录问题：
+web应用程序默认执行
+http://localhost:8080        默认执行的是WEBAPPS/ROOT/index.html        
+http://localhost:8080/t2/    默认执行的是WEBAPPS/t2/index.html如果webapps下没有t2则在Root下找t2
+http://localhost:8080/dist/t2/    默认执行的是WEBAPPS/dist/t2/index.html
+主要看host那段配置，appBase为webapps，在appBase目录下的项目在tomcat启动的时候都会被部署，默认运行的时ROOT项目，可以在里面配置来替换掉默认的ROOT项目
+在Host内添加一行 ：  <Context path=”" docBase=”xiaoming” debug=”0″ reloadable=”true” />
+ 
+这样重启tomcat后，他就会把起先默认目录里webapps/ROOT默认目录 修改成了webapps/xiaoming  这个目录。进入主页就是xiaoming 目录内的 内容
+ 
+ 
+ 
+ 
+<Host name="localhost" appBase="F:\web\project">          F:\web\project\test\index.html
+   <Context path="/test" docBase="F:\web\project\test"/>          http://localhost:8080/test/
+<Context path="" docBase="test"/>                  http://localhost:8080/    或者http://localhost:8080/test/
+</Host> 
+ 
+ 
+<Host name="localhost" appBase="webapps">  
+   <Context path="" docBase="dist/t2"/>          http://localhost:8080/    WEBAPPS/dist/t2/index.html
+ <Context path="" docBase="dist/t2"/>              http://localhost:8080/t2/    WEBAPPS/t2/index.html
+ <Context path="/test" docBase="dist/t2"/>          http://localhost:8080/test    WEBAPPS/dist/t2/index.html
+ <Context path="/test" docBase="dist/t2"/>          http://localhost:8080        WEBAPPS/ROOT/index.html
+ <Context path="/test" docBase="dist/t2"/>          http://localhost:8080/dist/t2/    WEBAPPS/dist/t2/index.html    
+ <Context path="/test" docBase="dist/t2"/>          http://localhost:8080/t2/    WEBAPPS/t2/index.html
+</Host> 
+ 
+context的path指定该应用程序映射为服务器根目录的URI路径，即host+path（浏览器访问地址）；path表示浏览器访问的地址路径
+context的docBase对应的web应用程序的目录，相对路径是相对于host虚拟主机的appBase路径；docBase表示本地项目路径，可以是绝对路径或相对于webapps的路径
+reloadable表示项目修改时是否自动重新编译和装载项目（监听文件），如果为true，做了修改不用重启tomcat，但会耗费内存
+如果path属性值为空字符串，则表示该应用程序为根web应用，可以看成是在ROOT目录 （http://localhost:8080/就是docBase路径应用；http://localhost:8080/path1/就是appBase/path1路径应用）
+如果path属性为test非空，则表示该应用程序使用path访问（http://localhost:8080/test/就是docBase路径应用；http://localhost:8080/就是appBase/ROOT路径应用；http://localhost:8080/path1/就是appBase/path1路径应用）
+ 
+ 
+部署
+2019年5月13日
+17:50
+ 
+指标传递使用tomcat部署调试环境：
+起前端服务，起tomcat服务，廖起的开发工具vscode
+ 
+过程
+0使用MobaXterm_Personal_11.1 新建服务器电脑连接；
+新建session，RDP，配置主机host：10.249.0.200;用户名：；port:3389 =>OK
+1配置tomcat环境
+2更改一个server.xml配置文件，文件拷贝（把打包的dist文件夹放置到webapps里面）
+3运行bin下的starup.bat
+注意事项：
+1打包zip
+2修改成index.html(两个位置)
+ 
+理解：
+跑tomcat的目的？启动服务方便其他用户访问，域名注册其他用户通过域名连接到指定机器
+部署到生产机器的tomcat，不会停止；
+http://cloudate-config.alpha.tools.huawei.com:20016/dist/home/index.html#/login?Rurl=%2F00
+使用tomcat配置项目地址导致js依赖找不到的问题？？
+ 
+ 
+自己跑的项目，修改了，发布生产环境记得变更 
+webpack.congig.js中的index.html
+_Tpl_prod.html中修改了后台IP，注释掉了common.js和js.cookie.min.js
+ 
+连接后台的ip：window.paramlibAddr
+测试环境：100.101.68.157:30077
+生产环境：http://10.3.87.104:30077
+ 
+ 
+前端部署机器：
+测试机器：10.249.0.200  D:/liaojianfei/tomcat
+生产机器：
+ 
+ 
+后端
+修改数据库
+打包服务
+ 
+ 
+系统变量
+2019年5月13日
+17:52
+ 
+ 
+webpack配置
+2019年3月22日
+16:01
+WebPack可以看做是模块打包机：它做的事情是，分析你的项目结构，找到JavaScript模块以及其它的一些浏览器不能直接运行的拓展语言（Scss，TypeScript等），并将其转换和打包为合适的格式供浏览器使用
+准备
+1、创建package.json文件npm init命令可以自动创建这个package.json文件
+2、安装
+//全局安装
+npm install -g webpack
+//安装到你的项目目录
+npm install --save-dev webpack
+3创建文件目录结构：
+app文件夹用来存放原始数据和我们将写的JavaScript模块，
+public文件夹用来存放之后供浏览器读取的文件（包括使用webpack打包生成的js文件以及一个index.html文件）
+index.html --放在public文件夹中;目的在于引入打包后的js文件
+Greeter.js-- 放在app文件夹中;
+main.js-- 放在app文件夹中;
+“__dirname”是node.js中的一个全局变量，它指向当前执行脚本所在的目录
+ 
+配置devtool
+SourceMap一个存储源代码与编译代码对应位置映射的信息文件
+Webpack打包生成的.map后缀文件，使得我们的开发调试更加方便，它能帮助我们链接到断点对应的源代码的位置进行调试（//# souceURL），而devtool就是用来指定source-maps的配置方式的
+devtool选项值：
+source-map
+cheap-module-source-map生产环境推荐
+eval-source-map 开发环境推荐
+cheap-module-eval-source-map
+ 
+配置本地服务器webpack-dev-server
+它通过nodejs的express 来起一个server提供静态文件服务，同时它根据配置信息（xxx.config.js）来打包资源，存在内存中，同时当你的代码发生改变的时候，它还可以刷新你的浏览器。它是一个单独的npm module，通过npm install webpack-dev-server --save-dev来给项目安装依赖。通过devServer选项配置
+contentBase加载页面index.html目录
+port端口
+inline:true浏览器自动刷新
+historyApiFallback:true
+package.json中 "dev":"webpack-dev-server --open"
+host 配置项用于配置DevServer服务器监听的地址。配置host:0.0.0.0
+我的IP地址是：10.10.42.3。那么像上图这样配置后，
+局域网内其它机器需要访问：10.10.42.3:8080 。
+本机访问：10.10.42.3:8080 或者 localhost:8080 或者 127.0.0.1:8080
+ 
+自动刷新只会监听到模块文件的变化，index静态文件更改不会自动更新
+ 
+配置loaders
+通过使用不同的loader，webpack有能力调用外部的脚本或工具，实现对不同格式的文件的处理
+Loaders需要单独安装并且需要在webpack.config.js中的module关键字下rules数组进行配置，
+test:匹配loasers所处理文件扩展名的正则表达式，test:/(\.jsx|\.js)$/,
+use数组或对象下的loader:loader名称
+include/exclude:手动添加必须处理的文件或屏蔽不需要处理的文件（可选）
+webpack内置可处理JSON文件，所以json不需要加载loader
+关于css的loader配置：
+同一个文件引入多个loader的方法（从后向前配置）
+安装npm install --save-dev style-loader css-loader
+配置module:{
+rules:[{
+test:/\.css$/,
+use:[{
+loader:"style-loader"
+},{
+loader:"css-loader"
+}]
+},{其他文件loader配置}
+]
+}
+使用CSS modules把JS的模块化思想带入CSS中来，通过CSS模块，所有的类名，动画名默认都只作用于当前模块
+使用PostCSS来为CSS代码自动添加适应不同浏览器的CSS前缀npm install --save-dev postcss-loader autoprefixer                        
+ 
+配置babel
+一个编译JavaScript的平台，转码核心包babel-core Es6:babel-env-preset JSX:babel-preset-react
+安装npm install --save-dev babel-core babel-loader babel-preset-env babel-preset-react
+在modules关键字下rules数组里的相关文件loader旁的options进行配置或者在.babelrc文件单独配置（webpack会自动调用.babelrc里的babel配置选项）
+options:{presets:["env","react"]}
+.babelrc文件是一个json文件
+{
+    "presets": ["es2015"],
+    "plugins": ["transform-object-rest-spread"]
+}
+关于babel-core与babel-loader版本不一致问题，npm install --save-dev @babel/core
+两种解决方案:
+回退低版本
+npm install -D babel-loader@7 babel-core babel-preset-env
+更新到最高版本:
+npm install -D babel-loader @babel/core @babel/preset-env webpack
+ 
+配置plugins
+插件会在整个构建过程中生效，执行相关的任务（loaders是在打包构建过程中用来处理源文件的）
+第三方插件先安装后引入后在plugins数组添加插件实例，webpack内置插件直接添加实例
+HtmlWebpackPlugin
+这个插件的作用是依据一个简单的index.html模板，生成一个自动引用你打包后的JS文件的新index.html。这在每次生成的js文件名称不同时非常有用（比如添加了hash值）。npm install --save-dev html-webpack-plugin
+修改项目：
+1、移除public文件夹，利用此插件，index.html文件会自动生成，此外CSS已经通过前面的操作打包到JS中了。
+2、在app目录下，创建一个index.tmpl.html文件模板，这个模板包含title等必须元素，在编译过程中，插件会依据此模板生成最终的html页面，会自动添加所依赖的 css, js，favicon等文件，index.tmpl.html中的模板源代码如下：
+Hot Module Replacement（HMR）webpack内置插件直接添加插件实例不需要安装和加载
+这个插件允许你在修改组件代码后，自动刷新实时预览修改后的效果
+修改：
+1、在webpack配置文件中添加HMR插件；new webpack.HotModuleReplacementPlugin()//热加载插件
+2、在Webpack Dev Server中添加“hot:true”参数；
+ 
+ 
+publicPath: 顾名思义就是一个公共地址，用于处理静态资源的引用地址问题，比如图片的地址路径问题。尤其是在你打包图片生成的路径与html的不在同一个目录时，这个时候就必须用publicPath来指定图频引用径。
+一般情况下都要保证devServer中的publicPath与output.publicPath保持一致
+ 
+ 
+配置文件code
+console.log('执行webpack.config.js文件')
+const path = require('path')
+const webpack = require('webpack');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+// const ExtractTextPlugin = require('extrac-text-webpack-plugin');
+module.exports={
+    entry:__dirname +'/app/main.js',
+    output:{
+        path:__dirname+'/build',//绝对路径,输出文件路径包括利用插件hwp生成的index.html（生成磁盘文件的路径）
+        filename:"bundle.js",
+        publicPath:"/public"  //使用/开头的绝对路径；影响1、启动服务的index.html和bundle.js的虚拟路径（只在内存中）；2、打包生成的index.html文件里面引用资源路径前缀/3、服务虚拟index的文件引用资源路径 4、devServer的虚拟目录，访问地址路径localhost:8081/public
+    },
+    devtool:'eval-source-map',//生产环境cheap-module-source-map开发环境eval-source-map暴漏源代码
+    devServer:{
+        // contentBase:"./dist",//本地服务器加载页面所在默认目录（http://localhost:8081/所在页面）
+        publicPath:"/public",//启动服务生成虚拟index.html路径，启动服务的访问地址路径：localhost:8081/dist2 启动地址首先在devServer的publicPath取，没有去output的publicPath取，没有默认/；如果路径和output中的publicPath不一致，会找不到资源报错，所以一般情况下都要保证devServer中的publicPath与output.publicPath保持一致
+        port:'8081',
+        inline:true,
+        historyApiFallback:true,
+        // hot:true
+    },
+    module:{
+        rules:[{
+            test:/(\.jsx|\.js)$/,
+            use:{
+                loader:"babel-loader"
+            },
+            exclude:/node_modules/
+        },{
+            test:/\.css$/,
+            use: [
+                {
+                    loader: "style-loader"
+                }, {
+                    loader: "css-loader"
+                }
+            ]
+            // use:ExtractTextPlugin.extract({
+            //     fallback:"style-loader",
+            //     use:[{
+            //         loader:"css-loader",
+            //         options:{
+            //             modules:true,
+            //             localIdentName:'[name]_[local]--[hash:base64:5]'
+            //         },
+            //     },{
+            //         loader:"postcss-loader"
+            //     }]
+            // })
+        }]
+    },
+    plugins:[
+        new HtmlWebpackPlugin({
+            template: __dirname + "/app/index.temp.html", //根据模板生成一个自动引用打包后的JS文件的新index.html
+            // filename: 'pages/index.html'//输出html文件的位置路径及名称
+        }),
+        // new webpack.optimize.OccurrenceOrderPlugin(),
+        // new webpack.optimize.UglifyJsPlugin(),
+        // new ExtractTextPlugin("style.css")
+    ]
+}
+ 
+ 
+详细说明：
+ 
+入口起点(entry point)指示 webpack 应该使用哪个模块，来作为构建其内部依赖图的开始
+output 属性告诉 webpack 在哪里输出它所创建的 bundles
+向硬盘写入编译文件。注意，即使可以存在多个入口起点，但只指定一个输出配置
+loader 让 webpack 能够去处理那些非 JavaScript 文件,在module下的rules数组中配置
+test 属性，用于标识出应该被对应的 loader 进行转换的某个或某些文件。
+use 属性，表示进行转换时，应该使用哪个 loader。
+loader工具要不要安装，要不要引入？要安装但不需要引入
+插件plugins执行范围更广的任务；需要安装（npm）需要引入（require）
+使用 new 操作符来创建它的一个实例，放到 plugins 数组中
+mode模式development或者production
+ 
+ 
+入口数组语法：
+将多个依赖一起注入，并将依赖导向到一个chunk时，entry使用数组
+入口对象语法：定义可扩展入口（多页面应用程序场景，多个独立分离的依赖图）
+entry:{entryName:path1,entryName2:path2}
+ 
+output的最低要求是将它的值设置为一个对象
+filename输出文件的文件名path输出目录的绝对路径
+ 
+ 
+关于自动刷新：
+修改了css等源码并保存后，应该先触发一次webpack编译，在编译完成后，再通知浏览器去刷新。
+ 
+ 
+ 
+"scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "vendor-build": "webpack --config webpack.config.vendor.js",
+    "dev": "node --max-old-space-size=4096 devserver.js",
+    "app-build": "webpack --verbose",
+    "app-build:prod": "webpack --env.prod",
+    "clean": "rimraf ./dist",
+    "prebuild:prod": "npm run clean && npm run vendor-build",
+    "build:prod": "webpack --config webpack.config.vendor.js --env.prod&&webpack --env.prod"
+  },
+打包运行：build:prod
+webpack配置：
+webpack.config.vendor.js
+const path = require('path')
+const webpack = require('webpack')
+const ExtractTextPlugin = require('extract-text-webpack-plugin')
+ 
+module.exports = (env) => {
+    const extractCss = new ExtractTextPlugin('vendor.css')
+    const isDevBuild = !(env && env.prod)
+ 
+    return [{
+        entry: {
+            vendor: [
+                'jquery',
+                'vue',
+                "vue-router",
+                'babel-polyfill',
+                'bootstrap/dist/css/bootstrap.min.css',
+                // 'reflect-metadata',
+ 
+                //element-ui
+                'element-ui',
+                // 'element-ui/lib/theme-default/index.css'
+            ]
+        },
+        module: {
+            rules: [
+                { test: /\.css(\?|$)/, use: extractCss.extract({ use: 'css-loader' }) },
+                {
+                    test: /\.(png|woff|woff2|eot|ttf|svg)(\?|$)/,
+                    loader: 'file-loader',
+                    query: {
+                        outputPath: './',
+                        publicPath: './'
+                    }
+                }
+            ]
+        },
+        output: {
+            path: path.resolve(__dirname, './', 'dist', 'lib'),
+            filename: isDevBuild ? '[name].js' : '[name].prod.js',
+            library: '[name]_[hash]'
+        },
+        plugins: [
+            extractCss,
+            new webpack.ProvidePlugin({ $: 'jquery', jQuery: 'jquery' }),
+            new webpack.DllPlugin({
+                path: path.resolve(__dirname, './', 'dist', 'lib', isDevBuild ? '[name]-manifest.json' : '[name]-manifest.prod.json'),
+                name: '[name]_[hash]'
+            }),
+            new webpack.DefinePlugin({
+                'process.env.NODE_ENV': isDevBuild ? '"development"' : '"production"'
+            })
+        ].concat(isDevBuild ? [] : [
+            new webpack.optimize.UglifyJsPlugin()
+        ])
+    }]
+}
+ 
+webpack.config.js
+const path = require('path');
+const fs = require('fs');
+ 
+const webpack = require('webpack')
+const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+const copyWebpackPlugin = require("copy-webpack-plugin")
+ 
+module.exports = (env) => {
+    const isDevBuild = !(env && env.prod)
+ 
+    return [{
+        context: path.join(__dirname, 'src'),
+        entry: fs.readdirSync(path.resolve(__dirname, './src')).reduce((entries, dir) => {
+            const fullDir = path.join(__dirname, 'src', dir);
+            const entry = path.join(fullDir, 'app.js')
+            if(dir=="home"||dir=="equipment"){
+            if (fs.statSync(fullDir).isDirectory() && fs.existsSync(entry)) {
+                entries[dir] = [entry]
+            }}
+            return entries
+        }, {}),
+ 
+        output: {
+            publicPath: '../',
+            path: path.resolve(__dirname, 'dist'),
+            filename: isDevBuild ? '[name]/bundle.js' : '[name]/[hash].bundle.js'
+        },
+ 
+        module: {
+            rules: [{
+                test: /\.ts$/,
+                loader: 'awesome-typescript-loader'
+            }, {
+                test: /\.js$/,
+                exclude: /node_modules/,
+                loader: 'babel-loader'
+            }, {
+                test: /\.css$/,
+                use: ExtractTextPlugin.extract({
+                    use: 'css-loader'
+                })
+            }, {
+                test: /\.less$/,
+                use: 'less-loader'
+            }, {
+                test: /\.vue$/,
+                use: 'vue-loader'
+            },{
+                test: /\.md$/,
+                use: 'html-loader'
+            }, {
+                test: /\.(eot|svg|ttf|woff|woff2|otf)(\?\S*)?$/,
+                loader: 'file-loader'
+            },
+            {
+                test: /\.(png|jpe?g|gif|svg)(\?\S*)?$/,
+                loader: 'file-loader',
+                // query: {
+                // name: '/[name].[ext]',
+                //     publicPath: './images',
+                //     outputPath: '../images',
+                //     useRelativePath: true
+                // }
+            }]
+        },
+ 
+        resolve: {
+            extensions: ['.js', '.ts']
+        },
+ 
+        devtool: 'source-map',
+        plugins: [
+            new ExtractTextPlugin('./[name]/style.css'),
+            new webpack.ProvidePlugin({ $: 'jquery', jQuery: 'jquery' }),
+            new webpack.DllReferencePlugin({
+                context: path.resolve(__dirname),
+                manifest: require(isDevBuild ? './dist/lib/vendor-manifest.json' : './dist/lib/vendor-manifest.prod.json')
+            }),
+            new copyWebpackPlugin([{
+                from: __dirname + '/static',
+                to: './static'
+            }]),
+            new webpack.HotModuleReplacementPlugin(), // enable HMR
+            new webpack.DefinePlugin({
+                'process.env.NODE_ENV': isDevBuild ? '"development"' : '"production"'
+            })
+        ].concat((function () {
+            const e = fs.readdirSync(path.resolve(__dirname, './src')).reduce((entries, dir) => {
+                const fullDir = path.join(__dirname, 'src', dir);
+                const entry = path.join(fullDir, 'app.js')
+                if(dir=="home"||dir=="equipment"){
+                if (fs.statSync(fullDir).isDirectory() && fs.existsSync(entry)) {
+                    const html = new HtmlWebpackPlugin({
+                        inject: false,
+                        template: isDevBuild ? './_Tpl.html' : './_Tpl_prod.html',
+                        filename: isDevBuild ? `./${dir}/index.html` : `./${dir}/index_prod.html`
+                    })
+                    entries.push(html)
+                }}
+                return entries
+            }, [])
+            return e;
+        }()))
+    }]
+}
+ 
+devserver.js
+const express = require('express')
+ 
+ 
+const app = express()
+app.use(express.static('dist'))
+ 
+const webpackDevMiddleware = require('webpack-dev-middleware')
+const webpack = require('./node_modules/webpack')
+const webpackconfig = require('./webpack.config')()[0]
+ 
+const compiler = webpack(webpackconfig)
+ 
+app.use(webpackDevMiddleware(compiler, {
+    publicPath: '/dist/',
+    stats: {
+        colors: true
+    }
+}))
+app.listen(20016)
+ 
+console.log('web server start on http://localohost:20016/home/index.html')
+ 
+//TODO
+ 
+ 
+模块的描述文件，被称为package.json
+    name - 包名.
+    version - 包的版本号。
+    description - 包的描述。
+    homepage - 包的官网URL。
+    author - 包的作者，它的值是你在https://npmjs.org网站的有效账户名，遵循“账户名<邮件>”的规则，例如：zhangsan <zhangsan@163.com>。
+    contributors - 包的其他贡献者。
+    dependencies / devDependencies - 生产/开发环境依赖包列表。它们将会被安装在 node_module 目录下。
+    repository - 包代码的Repo信息，包括type和URL，type可以是git或svn，URL则是包的Repo地址。
+    main - main 字段指定了程序的主入口文件，require('moduleName') 就会加载这个文件。这个字段的默认值是模块根目录下面的 index.js。
+    keywords - 关键字
+还可以设置script、license
+ 
+注意事项：
+1、关于ts
+TypeScript 将会默认的查看 ./node_modules/@types 文件夹，自动从这里来获取模块的类型定义，当然了，你需要独立安装这个类型定义。
+比如，你希望 core.js 的类型定义，那么，你需要安装这个库的定义库。
+npm install --save @types/core-js
+package.json中的
+dependencies中的@types
+ 
+ 
+直接导入模块，在.ts文件中是不行的
+这是由于typescript自身的机制，需要一份xx.d.ts声明文件，来说明模块对外公开的方法和属性的类型以及内容
+获取类型声明文件只需要使用npm
+npm install --save-dev @types/node
+就可以获得有关node.js v6.x的API的类型说明文件。之后，就可以顺利的导入需要的模块了:
+import * as http from 'http';
+对于内建模块，安装一个@types/node模块可以整体解决模块的声明文件问题。
+对于第三方模块
+ 
+2、关于npm script
+npm script是一个任务执行者
+原理：
+里面的每个属性对应一段shell脚本，实现原理是通过调用shell去运行脚本命令(调用可执行程序运行文件),将当前目录的node_modules/.bin子目录加入PATH变量，执行结束后，再将PATH变量恢复原样。
+项目目录下的node_modules/.bin/目录专门存放安装包的可执行程序,
+查看当前项目所有的脚本命令： npm run
+ 
+参数：
+--config 执行配置文件
+& 同时并行执行
+&& 前一个执行成功再执行最后一个
+向脚本传入参数必须使用 -- 表明
+通配符：
+dev:'node **/*.js',        *表示任意文件名，**表示任意一层子目录
+ 
+钩子：
+pre和post两个钩子
+用户执行npm run build的时候，会自动按照下面的顺序执行，npm run prebuild && npm run build && npm run postbuild因此，可以在这两个钩子里面，完成一些准备工作和清理工作。
+"clean": "rimraf ./dist && mkdir dist",
+"prebuild": "npm run clean",
+"build": "cross-env NODE_ENV=production webpack"
+ 
+变量：
+npm_package_前缀 
+变量可以拿到package.json里面的字段
+在调用的js文件中，通过环境变量process.env对象，拿到package.json的字段值，如
+process.env.npm_package_name
+支持嵌套字段,如：npm_package_script_dev
+npm run env 可以列出所有环境变量
+在script中使用：${npm_package_config_port}
+ 
+process.env.npm_config_xxx 
+变量来拿到 npm config 中的值。
+比如通过 process.env.npm_config_user_email 可以拿到 user.email 的值
+ 
+npm_lifecycle_event变量，返回当前正在运行的脚本名称如dev、start
+在同一个脚本文件里面，为不同的npm scripts命令编写代码
+const TARGET = process.env.npm_lifecycle_event;
+if (TARGET === 'test') {
+  console.log(`Running the test task!`);
+}
+ 
+if (TARGET === 'pretest') {
+  console.log(`Running the pretest task!`);
+}
+ 
+if (TARGET === 'posttest') {
+  console.log(`Running the posttest task!`);
+}
+ 
+npm cript中的webpack
+开发模式
+"dev": "webpack --config webpack.config.js",（或者直接  "dev":"webpack"   webpack会直接自动去找webpack.config.js文件并执行）
+"dev": "webpack --mode development",
+"dev":"webpack --mode development --progress --colors"
+--progress ：显示编译过程和百分比　　--colors：编译结果显示不同的颜色
+ 
+//生产模式
+"prod": "webpack -p", 
+"prod":"webpack --mode production",
+ 
+开发服务器模式
+"server": "webpack-dev-server",
+ 
+监控模式
+"watch": "webpack --mode development --watch"
+"watch": "webpack --watch"
+"watch":"webpack -d --watch"
+ 
+webpack配置问题点
+2019年5月21日
+15:28
+ 
+在node中，有全局变量process表示的是当前的node进程。
+process.env包含着关于系统环境的信息(可以访问到配置的环境变量信息)process.env.path
+但是process.env中并不存在NODE_ENV这个东西。
+NODE_ENV是用户一个自定义的变量，在webpack中它的用途是判断生产环境或开发环境的依据的。
+ 
+为了查看 process的基本信息，我们可以在文件夹中 新建一个 process.js 文件，在里面加一句代码：
+console.log(process);然后进入该文件夹，执行 node process.js 
+ 
+ 
+环境变量：操作系统用来指定运行环境的一些参数
+作用范围：
+所有的在cmd命令行下对环境变量的修改只对当前窗口有效，不是永久性的修改。也就是说当关闭此cmd命令行窗口后，将不再起作用。永久性修改环境变量的方法有两种：一种是直接修改注册表（此种方法目前没试验过），
+另一种是通过我的电脑-〉属性-〉高级，来设置系统的环境变量
+ 
+windos命令行设置环境变量：
+查看所有环境变量set
+查看具体环境变量set NODE_ENV 
+设置环境变量
+set NODE_ENV=production 
+set path="d:\nmake.exe"
+环境变量追加值 
+set 变量名=%变量名%;变量内容 
+set path=%path%;C:\web;C:\Tools 
+删除环境变量 set NODE_ENV=
+ 
+ 
+打包配置全局环境变量：
+"build": "NODE_ENV=production webpack --progress --colors --devtool cheap-module-source-map"
+"dev": "NODE_ENV=development webpack-dev-server --progress --colors --devtool cheap-module-eval-
+ 
+source-map --hot --inline",
+ 
+为了区分开发环境和正式环境，配置运行命令，然后在webpack.config.js中通过 process.env.NODE_ENV 区分正式环境还是开发环境即可。
+DefinePlugin创建全局变量，可以在编译时进行设置，使用该属性来设置全局变量来区分开发环境和正式环境
+new webpack.DefinePlugin({'process.env': {
+        NODE_ENV: JSON.stringify(process.env.NODE_ENV)
+      }
+})
+ 
+一、加载存在依赖Vue的本地js如何处理Vue is not defined问题
+1.加载的js要在加载vue.js之后，所以先引入vue.js后引入本地js
+2.修改webpack.base.js配置文件，添加 externals选项
+externals:{
+"vue": "Vue",
+"vue-router": "VueRouter"}
+externals配置就是为了使import vue from 'vue'这句代码，在本身不引入vue的情况下，能够在各个环境都能解释执行。
+ 
+ 
+二、多个后端开发，提供的接口有相同开头，如何设置前端代理；不可能为每个api都设置本地代理
+    比如：
+    a写的接口
+    /s/com-huawei-dcp-deploy-deployservice/v1/api/api10
+    /s/com-huawei-dcp-deploy-deployservice/v1/api/api11
+    /s/com-huawei-dcp-deploy-deployservice/v1/api/api12
+    b写的接口
+    /s/com-huawei-dcp-deploy-deployservice/v1/api/api25
+    /s/com-huawei-dcp-deploy-deployservice/v1/api/api26
+    /s/com-huawei-dcp-deploy-deployservice/v1/api/api27
+ 
+这是粒度的问题，一般是某个模块的所有接口都统一走一个服务器；如果你连模块都统一不了，那就只能针对每个接口写代理配置了
+ 
+可以通过改写path实现：比如访问b写的接口的时候url使用useb，配置b的服务后重写地址到/s/com…
+ 
+        pathRewrite: {
+        '^/api': '/api'     //这种接口配置出来     http://XX.XX.XX.XX:8083/api/login
+         //'^/api': '/'      //这种接口配置出来      http://XX.XX.XX.XX:8083/login
+         //'^/api': '/adc'   //这种接口配置出来      http://XX.XX.XX.XX:8083/adc/login
+        }
+ 
+跨域代理proxyTable：
+changeOrigin参数，接收一个布尔值，如果设置为true，那么本地会虚拟一个服务端接收你的请求并代你发送该请求，这样就不会有跨域问题了，当然这只适用于开发环境
+请求的源地址：api.xxxx.com/list/1
+代理标识：'/list'//调用接口使用/list开头的才用代理（axios中的url写为/list/1）
+target:api.xxxx.com
+pathRewrite:{}
+如果axios中的url写为/client/list/1
+则标识应为/client
+并重写路径（因为源地址中没有client）^/client':''        把client去掉
+pathRewrite: {  
+            '^/api': '/'   //本身的接口地址没有 '/api' 这种通用前缀，所以要rewrite，如果本身有则去掉  
+        }
+由于 '/'表示的是根目录的意思，所以会解析为hostname + port + 请求的地址
+生产环境中跨域设置nginx配置文件
+ 
+三、配置本地web服务devServer
+Host:"0.0.0.0"
+  
+四、
+把项目文件放到webapps下无法访问到静态文件问题：
+cloudAte的可以，服务发布的不行,怎么回事？
+把服务发布的放置到webapps/ROOT可以；
+开发环境设置的前端代理，打包到生产环境如何处理服务请求地址？
+ 
+设置不同的环境配置文件：
+/config/dev.env.js
+/config/prod.env.js
+ 
+module.exports = merge(prodEnv, {
+  NODE_ENV: '"development"',
+  API_ROOT: '"//192.168.1.8/api"'
+})
+module.exports = {
+  NODE_ENV: '"production"',
+  API_ROOT: '"//www.baidu.com/api"'
+}
+api配置位置使用
+var root = process.env.API_ROOT
+ 
+关于跨域
+后端做跨域处理前端就不需要做代理
+后端没有跨域处理：
+前端开发环境用proxyTable做代理
+生产环境用tomcat或negix做代理
+service.bat
+JvmOptions:"-Dhttp.proxyHost=127.0.0.1;-Dhttp.proxyPort=1080;-Dhttps.proxyHost=127.0.0.1;-Dhttps.proxyPort=1080";
+或在bin/catalina.bat
+set "JAVA_OPTS=-Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=1080 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=1080"
+ 
+ 
+关于服务地址
+开发环境和生产环境各自配置或者
+开发环境和生产环境使用静态配置文件，可以手动更改
+静态文件配置
+var setting = (function () {
+    var config = {};
+    config.host = 'localhost.huawei.com';
+    config.port = 8080;
+    config.base_web = 'http://' + config.host + ':' + config.port;
+    config.workFlowUrl = 'http://10.21.86.217:19000'//流程引擎
+    config.commonServiceUrl = 'http://10.21.86.217:18000';//公共服务
+    config.servicePublishUrl = 'http://10.21.86.217:10000';//服务发布
+    try {
+        process.setting = config;
+    } catch (error) {
+        top.setting = config;
+    }
+    return config;
+})();
+ 
+配置文件引用
+require('../../../static/config/config.js')
+var workFlowURL = process.setting.workFlowUrl + '/workFlow/'//流程引擎

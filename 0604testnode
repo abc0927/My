@@ -1,0 +1,859 @@
+2018
+2019年3月14日
+19:23
+ 
+ 
+实现一个png上传查看页面：
+ 
+构建本地服务模块
+server.js
+var http = require("http");
+function start() {
+  function onRequest(request, response) {
+    console.log("Request received.");
+    response.writeHead(200, { "Content-Type": "text/plain" });
+    response.write("Hello World");
+    response.end();
+  }
+  http.createServer(onRequest).listen(8888);
+  console.log("Server has started.");
+}
+exports.start = start;
+ 
+index.js
+var server = require('./server');
+server.start()
+createServer  是一个函数，参数是一个函数，返回值是一个对象，包含listen方法，每次发请求都会执行作为参数的函数
+基于事件驱动的回调 Node.js是事件驱动的 创建了服务器，并且向创建它的方法传递了一个函数。无论何时我们的服务器收到一个请求，这个函
+ 
+数就会被调用
+回调：我们给某个方法传递了一个函数，这个方法在有相应事件发生时调用这个函数来进行回调 。
+注意，当我们在服务器访问网页时，我们的服务器可能会输出两次“Request received.”。那是因为大部分服务器都会在你访问 
+ 
+http://localhost:8888 /时尝试读取 http://localhost:8888/favicon.ico )
+可以像使用任何其他的内置模块一样使用server模块：请求这个文件并把它指向一个变量，其中已导出的函数就可以被我们使用了。
+把我们的应用的不同部分放入不同的文件里，并且通过生成模块的方式把它们连接到一起了。
+ 
+请求响应：
+查看HTTP请求，从中提取出请求的URL以及GET/POST参数，request对象中
+额外的Node.JS模块，它们分别是url和querystring模块
+把路由和服务器整合起来 依赖注入
+将路由函数作为参数传递到服务
+router.js function route(pathname)  路由模块
+index.js  server.start(route.route) 
+server.js function start(route)            路由注入
+针对请求“采取行动
+ 
+不同请求不同响应：
+把作为路由目标的函数称为请求处理程序requestHandlers.js 
+把请求处理程序和路由模块连接起来 ：硬编码与依赖注入
+requestHandlers.js function start(){}
+index.js handle[] = requestHandlers.start        server.start(route.route,handle)
+server.js start(route,handle){ route(handle,pathname)
+router.js route(handle,pathname){ handle[pathname]();
+检查给定的路径对应的请求处理程序是否存在，如果存在直接调用
+ 
+请求返回信息：
+请求处理程序return
+路由 将请求处理程序返回给它的信息返回给服务器
+服务 将请求处理程序通过请求路由返回的内容响应给浏览器
+ 
+阻塞与非阻塞
+非阻塞操作 回调 事件轮询  函数传递
+以非阻塞操作进行请求响应
+非阻塞操作：exec()
+匿名回调函数中做请求响应的操作
+将response对象（从服务器的回调函数onRequest()获取）通过请求路由传递给请求处理程序。 随后，处理程序就可以采用该对象上的函数来对请
+ 
+求作出响应
+response => route(handle,pathname,response) => handle[pathname](response) => 非阻塞回调 调用response
+ 
+处理POST请求
+来自请求的数据 request对象 
+Node.js会将POST数据拆分成很多小的数据块，然后通过触发特定的事件，将这些小数据块传递给回调函数。这里的特定的事件有data事件（表示
+ 
+新的小数据块到达了）以及end事件（表示所有的数据都已经接收完毕）
+我们需要告诉Node.js当这些事件触发的时候，回调哪些函数。怎么告诉呢？ 我们通过在request对象上注册监听器（listener） 来实现
+将data和end事件的回调函数直接放在服务器中，在data事件回调中收集所有的POST数据，当接收到所有数据，触发end事件后，其回调函数调用请
+ 
+求路由，并将数据传递给它，然后，请求路由再将该数据传递给请求处理程序。
+服务端对request添加监听data和end，end执行路由传递data，请求处理程序接收data做出响应
+ 
+处理文件上传：
+如何安装外部Node.js模块，以及如何将它们应用到我们的应用中
+npm install formidable
+var formidable = require("formidable");
+var form = new formidable.IncomingForm();
+form.parse(request, function (error, fields, files) {
+fs.renameSync("./1.png", "./test.png")
+response.writeHead(200, {
+            "Content-Type": "text/html"
+        });
+        console.log("renameSync done");
+        response.write("received image:<br/>");
+        response.write("<img src='/show' />");
+        response.end();
+}
+ 
+ 
+0314服务回调事件
+2019年3月14日
+19:22
+ 
+Node.js是运行在服务端的JavaScript。
+Node.js是一个基于Chrome JavaScript运行时建立的一个平台。
+Node.js是一个事件驱动I/O服务端JavaScript环境，基于Google的V8引擎，V8引擎执行Javascript的速度非常快，性能非常好。
+对于不会运用Python、PHP以及Java等动态编程语言的前端程序员来说，选择Node.js作为一个创建自己的服务的工具是非常明智的
+ 
+ 
+node应用：
+1引入required模块：我们可以使用require指令来载入Node.js模块。
+2创建服务器：服务器可以监听客户端的请求，类似于Apache 、Nginx等HTTP服务器。
+3接收请求与响应请求：服务器很容易创建，客户端可以使用浏览器或终端发送HTTP请求，服务器接收请求后返回响应数据。
+ 
+包管理工具：npm本地安装在node_modules下，通过require引入 npm install argv @<version>
+从NPM服务上下载安装一个命令行程序
+ 
+Node.js REPL(交互式解释器)
+终端键入node进入命令交互模式，回车node自动检测是否为连续表达式
+下划线获取上次表达式的运算结果
+ 
+退出：ctrl + c ctrl + d
+.help - 列出使用命令
+.break - 退出多行表达式
+.clear - 退出多行表达式
+.save filename - 保存当前的 Node REPL 会话到指定文件
+.load filename - 载入当前 Node REPL 会话的文件内容。
+ 
+Node.js 回调函数
+异步编程依托于回调来实现
+Node 所有 API 都支持回调函数
+执行异步操作的函数将回调函数作为最后一个参数， 回调函数接收错误对象作为第一个参数，接受异步操作结果为第二个参数
+ 
+ 
+事件循环
+Node.js 是单进程单线程应用程序，但是通过事件和回调支持并发
+Node.js 的每一个 API 都是异步的，并作为一个独立线程运行
+Node.js 基本上所有的事件机制都是用设计模式中观察者模式实现
+事件驱动程序，事件驱动模型生成一个主循环来监听事件，当检测到事件时触发回调函数
+ 
+事件：
+Node.js 里面的许多对象都会分发事件
+所有的异步 I/O 操作在完成时都会发送一个事件到事件队列，这些产生事件的对象都是 events.EventEmitter 的实例
+对于每个事件，EventEmitter 支持若干个事件监听器。当事件发射时，注册到这个事件的事件监听器被依次调用，事件参数作 为回调函数参数传递
+var events = require('events');
+var eventEmitter = new events.EventEmitter();//创建eventEmitter对象
+EventEmitter 的核心就 是事件发射与事件监听器功能的封装
+API:
+EventEmitter.on(event, listener)、emitter.addListener(event, listener) 为指定事件注册一个监听器，接收一个字符串 event 和一个回调函数 listener
+EventEmitter.emit(event, [arg1], [arg2], [...]) 发射 event 事件，传 递若干可选参数到事件监听器的参数表。
+EventEmitter.once(event, listener) 为指定事件注册一个单次监听器，即 监听器最多只会触发一次，触发后立刻解除该监听器。
+EventEmitter.removeListener(event, listener) 移除指定事件的某个监听 器，listener 必须是该事件已经注册过的监听器。
+EventEmitter.removeAllListeners([event]) 移除所有事件的所有监听器， 如果指定 event，则移除指定事件的所有监听器。
+EventEmitter 定义了一个特殊的事件 error
+继承 EventEmitter
+大多数时候我们不会直接使用 EventEmitter，而是在对象中继承它。包括 fs、net、 http 在内的，只要是支持事件响应的核心模块都是 EventEmitter 的子类。
+//创建服务
+var http = require('http')
+http.createServer(function(request,response){
+    response.writeHead(200,{'Content-Type':'text/plain'});
+    response.end('hello World1\n');
+}).listen(8888);
+console.log('Server runing at http://127.0.0.1:8888/')
+ 
+ 
+//回调函数
+// var fs  = require('fs');
+// var data = fs.readFileSync('input.text');//阻塞调用，按顺序执行
+// console.log(data.toString());
+ 
+// fs.readFile('input.text',function(err,data){//非阻塞调用
+//     if(err){return console.error(err)}
+//     console.log('非阻塞代码示例'+data.toString())
+// })
+// console.log('程序执行结束');
+ 
+ 
+//事件驱动
+var events = require('events');
+var eventEmitter = new events.EventEmitter();//创建eventEmitter对象
+// var connectHander = function connected(){//创建事件处理程序
+//     console.log('连接成功');
+//     eventEmitter.emit("data_received")//触发data_received事件
+// }
+// eventEmitter.on('connection',connectHander)//绑定connection事件处理程序
+// eventEmitter.on('data_received',function(){//绑定事件处理程序（注册事件处理程序）
+//     console.log('数据接受成功')
+// })
+// eventEmitter.emit('connection')//触发事件
+ 
+//事件
+eventEmitter.on('some_event',function(arg1,arg2){//注册事件监听器
+    console.log('listen1',arg1,arg2)
+})
+eventEmitter.on('some_event',function(arg1,arg2){
+    console.log('listen2',arg1,arg2)
+})
+setTimeout(function(){
+    eventEmitter.emit('some_event','byvoid',1989);//事件发射,事件参数作为回调函数参数传递
+},1000)
+// eventEmitter.emit('error')//自带error事件可以直接发射
+ 
+ 
+0318buf、stream
+Stream流 是一个抽象接口
+该抽象接口是可读、可写或是既可读又可写的，通过这些接口，我们可以和磁盘文件、套接字、HTTP请求来交互，实现数据从一个地方流动到另一个地方的功能
+Stream 有四种流类型：
+Readable - 可读操作。
+Writable - 可写操作。
+Duplex - 可读可写操作.
+Transform - 操作被写入数据，然后读出结果。
+ 
+所有的 Stream 对象都是 EventEmitter 的实例。常用的事件有：
+data - 当有数据可读时触发。
+end - 没有更多的数据可读时触发。
+error - 在接收和写入过程中发生错误时触发。
+finish - 所有数据已被写入到底层系统时触发
+ 
+管道提供了一个输出流到输入流的机制。通常我们用于从一个流中获取数据并将数据传递到另外一个流中 readerStream.pipe(writerStream);
+链式是通过连接输出流到另外一个流并创建多个对个流操作链的机制。链式流一般用于管道操作压缩和解压文件
+ 
+ 
+///读取流数据/
+// var fs = require("fs");
+// var data = "";
+//创建可读流
+// var readerStream = fs.createReadStream('input.txt');
+//设置编码为utf-8
+// readerStream.setEncoding('UTF-8');
+//处理流事件
+// readerStream.on('data',function(chunk){
+//     data += chunk
+// });
+// readerStream.on('end',function(){
+//     console.log(data)
+// })
+// readerStream.on('error',function(err){
+//     console.log(err.stack)
+// })
+ 
+//写入流
+// var fs = require('fs');
+// var data = '文本字符串数据';
+// //创建一个可以写入的流 写入到文件中
+// var writerStream = fs.createWriteStream('output.txt');
+// //使用utf-8编码写入数据
+// writerStream.write(data,'UTF-8');
+// //标记文件末尾
+// writerStream.end();
+// //处理流事件
+// writerStream.on('finish',function(){
+//     console.log('写入完成')
+// })
+// writerStream.on('error',function(err){
+//     console.log(err.stack)
+// })
+ 
+//管道流，复制文件
+// var fs = require('fs');
+// //创建可读流
+// var readerStream = fs.createReadStream('input.txt');
+// //创建可写流
+// var writerStream = fs.createWriteStream('output.txt');
+// //管道流写操作 读取并写入
+// readerStream.pipe(writerStream)
+ 
+//链式流压缩与解压缩
+var fs = require('fs');
+var zlib = require('zlib');
+//压缩input.text 为input.text.gz
+fs.createReadStream('input.txt')
+    .pipe(zlib.createGzip())
+    .pipe(fs.createWriteStream('input.txt.gz'))
+    console.log('压缩完成')
+ 
+//解压input.txt.gz为output.txt
+fs.createReadStream('input.txt.gz')
+    .pipe(zlib.createGunzip())  //unexpected end of file at Gunzip.zlibOnError
+    .pipe(fs.createWriteStream('output.txt'))
+    console.log('解压完成')
+2019年3月18日
+18:35
+ 
+Buf:
+处理像TCP流或文件流时，必须使用到二进制数据 
+Node.js中，定义了一个 Buffer 类，该类用来创建一个专门存放二进制数据的缓存区
+一个 Buffer 类似于一个整数数组
+//创建buffer类 长度、数组、字符串 可以看成一个伪数组
+var buf = new Buffer(10);
+var buf2 = new Buffer([97,98,99]);//abc
+var buf3 = new Buffer("buf3","utf-8");
+// console.log(buf,buf2,buf3)
+//写入缓存区 buf.write(string[,offset[,length]][,encoding]),返回写入的大小
+var len = buf.write("buf")
+//读取缓存区 buf.toString([,encoding[,start[,end]]]), 解码缓存区数据并使用指定的编码返回字符串
+var buf0 = new Buffer(26);
+for (var i = 0;i<26;i++){
+    buf0[i] = i + 97;
+}
+// console.log(buf0.toString(undefined,0,5))
+//将buffer转换为JSON对象，buf.toJSON() 返回JSON对象（含字节数组）
+// console.log(buf0.toJSON())
+//缓冲区合并 Buffer.concat(list[,totalLength])返回多成员合并的Buffer对象
+var buf4 = Buffer.concat([buf0,buf2,buf3])
+// console.log(buf4.toString())
+//缓冲区比较 buf.compare(otherbuffer) 返回一个数字表示buf在otherBuffer之前<0之后>0或相同 =0
+var result = buf.compare(buf2)
+//拷贝缓冲区   sourceBuf.copy(targetBuf[,targetStart[,sourcestart[,sourceEnd]]])无返回值改变targetBuf
+buf.copy(buf2,1,2,3)//拷贝会覆盖目标对象，且目标对象长度不会发生改变，拷贝到多余的自动丢弃
+// console.log(buf2.toString())
+//缓冲区剪裁buf.slice([start,[end]]) 返回新的buf但是和旧的buf指向同一内存,修改新的旧的也会受影响
+var buf1 = buf.slice(0,1) 
+console.log(buf1.toString())//b
+buf0.copy(buf)
+console.log(buf1.toString())
+//缓冲区内存长度 buf.length
+//获取或设置指定的字节 buf[index]
+ 
+ 
+0319express 、路由
+2019年3月20日
+11:45
+路由：url和querystring模块
+url.parse(request.url).pathname匹配到路径
+url.parse(request.url).query 匹配到查询字符串
+ 
+                url.parse(string).query
+                                           |
+           url.parse(string).pathname      |
+                       |                   |
+                       |                   |
+                     ------ -------------------
+http://localhost:8888/start?foo=bar&hello=world
+                                ---       -----
+                                 |          |
+                                 |          |
+              querystring(string)["foo"]    |
+                                            |
+                         querystring(string)["hello"]
+ 
+ 
+ 
+index.js
+var server = require('./server');
+var route = require('./router');
+var requestHandlers = require('./requestHandlers')
+var handle = {}
+handle['/'] = requestHandlers.start;
+handle['/start'] = requestHandlers.start;
+handle['/show'] = requestHandlers.show;
+server.start(route.route,handle)
+ 
+server.js
+var http = require('http');
+var url = require("url");
+function start(route,handle){
+    function onRequest(request,response){
+        var pathname = url.parse(request.url).pathname;
+        var query = url.parse(request.url).query;
+        console.log('接收到请求' + pathname)
+        console.log('查询字符串为' + query)
+        route(handle,pathname)
+        response.writeHead(200,{"Content-Type":"text/plain"});
+        response.write("hello world");
+        response.end()
+    }
+    http.createServer(onRequest).listen(8888);
+    console.log('启动服务')
+}
+exports.start = start
+ 
+router.js
+function route(handle,pathname){
+    console.log("请求路由" + pathname)
+    if(typeof handle[pathname] == 'function'){
+        handle[pathname]();
+    }else{
+        console.log('请求路由页面无' + pathname)
+    }
+    
+}
+exports.route = route;
+ 
+requestHandler.js
+function start(){
+    console.log('处理路由start')
+}
+function handle(){
+    console.log('处理路由handle')
+}
+function show(){
+    console.log('处理路由show')
+}
+exports.start = start;
+exports.handle = handle;
+exports.show = show;
+从浏览器地址栏输入url到客户端显示数据之间这个过程到底发生了什么
+浏览器向服务器发送一个请求后，服务器直接通过request.定位属性的方式得到通过request携带过去的数据（有用户输入的数据和浏览器本身的数据信息）。这中间就一定有一个函数将这些数据分类做了处理，已经处理好了，最后让request对象调用使用，对的，这个处理数据处理函数就是我们要说的 中间件
+1、封装了一些处理一个完整事件的功能函数。
+2、非内置的中间件需要通过安装后，require到文件就可以运行。
+3、封装了一些或许复杂但肯定是通用的功能。
+ 
+var express = require("express");
+var app = express();
+var bodyParse = require("body-parser");//npm install --save body-parser
+var urlencodedParser = bodyParse.urlencoded({extended:false})
+app.get('/',function(req,res){
+   res.send('发送数据1') 
+})
+app.post('/',function(req,res){
+    console.log('主页post请求')
+    res.send('发送数据2') 
+ })
+ app.get('/list',function(req,res){
+     res.send("发送list页面数据")
+ })
+app.use(express.static('public'))
+ //设置静态资源目录，可以通过url直接访问不用添加pulic如： http://localhost:8081/test.png
+app.get('/index.html',function(req,res){
+    res.sendFile(__dirname + "/" + "index.html")
+})
+app.get('/process_get',function(req,res){
+    var response ={
+        "first_name":req.query.first_name,
+        "last_name":req.query.last_name
+    }
+    res.send(JSON.stringify(response))
+})
+app.post('/process_post',urlencodedParser,function(req,res){
+    var response2 = {
+        "first_name":req.body.first_name,
+        "last_name":req.body.last_name,
+    }
+    res.send(JSON.stringify(response2))
+})
+var server = app.listen(8081,function(){
+    var host = server.address().address;
+    var port = server.address().port;
+    // console.log(server.address());
+});
+ 
+ 
+ 
+ 
+ 
+Express框架 是一个为Node.js设计的web开发框架，它基于nodejs平台
+安装express        npm install express --save
+以下几个重要的模块是需要与express框架一起安装的：
+body-parser - node.js中间件，用于处理JSON, Raw, Text和URL编码的数据。
+cookie-parser - 这就是一个解析Cookie的工具。通过req.cookies可以取到传过来的cookie，并把它们转成对象。
+multer - node.js中间件，用于处理enctype="multipart/form-data"（设置表单的MIME编码）的表单数据。
+引入
+var express = require('express');
+var app = express();
+ 
+app.get('/',function(req,res){
+    res.send('hello world');
+})
+var server = app.listen(8081,function(){
+    var host  = server.address().adderss;
+    var port = server.address().port;
+    console.log(server.address())
+})
+//执行此文件并在浏览器访问 localhost:8081
+//express应用使用回调函数的参数，request和response对象来处理请求和响应数据
+ 
+Request 对象 - request对象表示HTTP请求，包含了请求查询字符串，参数，内容，HTTP头部等属性。常见属性有：
+req.app：当callback为外部文件时，用req.app访问express的实例
+req.baseUrl：获取路由当前安装的URL路径
+req.body / req.cookies：获得「请求主体」/ Cookies
+req.fresh / req.stale：判断请求是否还「新鲜」
+req.hostname / req.ip：获取主机名和IP地址
+req.originalUrl：获取原始请求URL
+req.params：获取路由的parameters
+req.path：获取请求路径
+req.protocol：获取协议类型
+req.query：获取URL的查询参数串
+req.route：获取当前匹配的路由
+req.subdomains：获取子域名
+req.accpets（）：检查请求的Accept头的请求类型
+req.acceptsCharsets / req.acceptsEncodings / req.acceptsLanguages
+req.get（）：获取指定的HTTP请求头
+req.is（）：判断请求头Content-Type的MIME类型
+ 
+Response 对象 - response对象表示HTTP响应，即在接收到请求时向客户端发送的HTTP响应数据。常见属性有：
+res.app：同req.app一样
+res.append（）：追加指定HTTP头
+res.set（）在res.append（）后将重置之前设置的头
+res.cookie（name，value [，option]）：设置Cookie
+opition: domain / expires / httpOnly / maxAge / path / secure / signed
+res.clearCookie（）：清除Cookie
+res.download（）：传送指定路径的文件
+res.get（）：返回指定的HTTP头
+res.json（）：传送JSON响应
+res.jsonp（）：传送JSONP响应
+res.location（）：只设置响应的Location HTTP头，不设置状态码或者close response
+res.redirect（）：设置响应的Location HTTP头，并且设置状态码302
+res.send（）：传送HTTP响应
+res.sendFile（path [，options] [，fn]）：传送指定路径的文件 -会自动根据文件extension设定Content-Type
+res.set（）：设置HTTP头，传入object可以一次设置多个头
+res.status（）：设置HTTP状态码
+res.type（）：设置Content-Type的MIME类型
+ 
+路由：
+路由决定了由谁(指定脚本)去响应客户端请求
+通过路由提取出请求的URL以及GET/POST参数
+app.get('/', function (req, res) {
+   console.log("路由某页面某方法的请求");
+   res.send('发送数据');
+})
+ 
+静态文件
+Express提供了内置的中间件express.static来设置静态文件如：图片，CSS, JavaScript等。
+使用express.static中间件来设置静态文件路径。例如，如果你将图片， CSS, JavaScript文件放在public目录下
+app.use(express.static('public'));
+GET方法
+POST方法
+文件上传
+ 
+ 
+ 
+0320模块系统/全局对象
+2019年3月20日
+19:18
+函数：
+一个函数可以作为另一个函数的参数进行传递
+也可以把函数作为变量直接传递，此时可以省略函数名使用匿名函数
+function say (word){
+    console.log("hello" + word)
+}
+function execute(somefn,value){
+    somefn(value)
+}
+// execute(say,'lilei')
+execute(function (word){
+    console.log("hello2" + word)
+},'lilei2')
+模块系统：
+为了让Node.js的文件可以相互调用，Node.js提供了一个简单的模块系统。
+文件和模块是一一对应的。换言之，一个 Node.js 文件就是一个模块
+ require('./hello') 引入了当前目录下的hello.js文件（./ 为当前目录，node.js默认后缀为js）
+Node.js 提供了exports 和 require 两个对象，其中 exports 是模块公开的接口，require 用于从外部获取一个模块的接口，即所获取模块的 exports 对象。
+exports.world = function(){console.log("hello world")}
+function Hello(){};
+module.exports = Hello ;
+把一个对象封装到模块中
+module.exports = function() {
+  // ...
+}
+ 
+//创建1
+// exports.say = function(){
+//     console.log('hello world')
+// }
+//引用1
+// var other = require('./module')
+// other.say()
+//创建2
+// function Hello(){
+//     var name;
+//     this.setName = function(thyname){
+//         name = thyname;
+//     }
+//     this.sayName = function(){
+//         console.log('hello' + name)
+//     }
+// }
+// module.exports = Hello
+//引用2
+// var other = require('./module')
+// var o = new other()
+// o.setName('o1')
+// o.sayName()
+//创建3
+// module.exports = function(){
+//     var num = 1;
+//     console.log(num)
+// }
+//引用3
+// var num = require('./module')
+// num()
+ 
+//第三方模块需要用文件路径引用
+//内置模块直接使用名字引用
+// 4类模块（原生模块和3种文件模块）优先级排序
+// 文件模块缓存
+// 原生模块缓存区
+// 原生模块
+// 文件系统文件模块
+在浏览器 JavaScript 中，通常window 是全局对象
+在node.js中全局对象是global，在Node.js 中能够直接访问到对象通常都是 global 的属性
+global 最根本的作用是作为全局变量的宿主
+全局变量：
+在最外层定义的变量；
+全局对象的属性；
+隐式定义的变量（未定义直接赋值的变量）。
+永远使用var 定义变量以避免（隐式）引入全局变量，因为全局变量会污染命名空间，提高代码的耦合风险。
+ 
+process用于描述当前Node.js 进程状态 的对象
+process.argv是命令行参数数组，第一个元素是 node，第二个元素是脚本文件名， 从第三个元素开始每个元素是一个运行参数。
+process.stdout是标准输出流，通常我们使用的 console.log() 向标准输出打印 字符，而 process.stdout.write() 函数提供了更底层的接口（终端输出）
+process.stdin是标准输入流，初始时它是被暂停的，要想从标准输入读取数据， 你必须恢复流process.stdin.resume()，并手动编写流的事件响应函数。（终端输入）
+process.nextTick(callback)的功能是为事件循环设置一项任务，Node.js 会在 下次事件循环响应时调用 callback，下次事件循环响应来做的事情
+ 
+console 用于提供控制台标准输出,用于向标准输出流（stdout）或标准错误流（stderr）输出字符
+console.log()：向标准输出流打印字符并以换行符结束
+console.error()向标准错误流输出。
+console.trace()：向标准错误流输出当前的调用栈。
+console.time('name')
+console.timeEnd('name')用与输出两次运行时间间隔
+ 
+ 
+0321 util工具、
+2019年3月21日
+12:48
+OS 模块 提供基本的系统操作函数
+var os = require("os");
+// CPU 的字节序
+console.log('endianness : ' + os.endianness());
+// 操作系统名
+console.log('type : ' + os.type());
+// 操作系统名
+console.log('platform : ' + os.platform());
+// 系统内存总量
+console.log('total memory : ' + os.totalmem() + " bytes.");
+// 操作系统空闲内存量
+console.log('free memory : ' + os.freemem() + " bytes.");
+ 
+ 
+Path 模块 提供了处理和转换文件路的工具。
+var path = require("path");
+// 格式化路径
+console.log('normalization : ' + path.normalize('/test/test1//2slashes/1slash/tab/..'));
+// 连接路径
+console.log('joint path : ' + path.join('/test', 'test1', '2slashes/1slash', 'tab', '..'));
+// 转换为绝对路径
+console.log('resolve : ' + path.resolve('main.js'));
+// 路径中文件的后缀名
+console.log('ext name : ' + path.extname('main.js'));
+ 
+Net 模块 用于底层的网络通信。提供了服务端和客户端的的操作。
+netserver.js
+var net = require('net');
+var server = net.createServer(function(connection){
+    console.log('客户端连接');
+    connection.on('end',function(){
+        console.log('客户端关闭连接')
+    })
+    connection.write('hello world');
+    connection.pipe(connection);
+})
+server.listen(8888,function(){
+    console.log('服务开启')
+})
+netclient.js
+var net = require('net');
+var client = net.connect({port:8888},function(){
+    console.log('连接到服务器');
+})
+client.on('data',function(data){
+    console.log(data.toString());
+    client.end();
+})
+client.on('end',function(){
+    console.log('断开连接')
+})
+ 
+DNS 模块用于解析域名。
+var dns = require('dns');
+dns.lookup('www.github.com',function(err,address,family){
+    console.log('ip地址' + address)
+    dns.reverse(address,function(err,hostnames){
+        console.log('反向解析域名' +  JSON.stringify(hostnames))
+    })
+})
+ 
+Domain 模块简化异步代码的异常处理，可以捕捉处理try catch无法捕捉的。
+domain模块，把处理多个不同的IO的操作作为一个组。注册事件和回调到domain，当发生一个错误事件或抛出一个错误时，domain对象会被通知，不会丢失上下文环境，也不导致程序错误立即推出，与process.on('uncaughtException')不同
+var EventEmitter = require('events').EventEmitter;
+var domain = require('domain');
+var emitter1 = new EventEmitter();
+//创建域
+var domain1 = domain.create();
+domain1.on('error',function(err){
+    console.log('domain1处理错误' + err.message)
+})
+//显示绑定
+domain1.add(emitter1);
+emitter1.on('error',function(err){
+    console.log('监听器处理错误' + err.message)
+})
+emitter1.emit('error',new Error('通过监听器处理'));
+emitter1.removeAllListeners('error');
+emitter1.emit('error',new Error('通过domain1处理'))
+ 
+var domain2 = domain.create();
+domain2.on('error',function(err){
+    console.log('domain2处理错误' + err.message)
+})
+//隐式绑定
+domain2.run(function(){
+    var emitter2 = new EventEmitter();
+    emitter2.emit('error',new Error('通过domain2处理'))
+})
+ 
+domain1.remove(emitter1);
+emitter1.emit('error',new Erro/r('转换为异常系统将崩溃'))
+util
+util.inherits是一个实现对象间原型继承的函数
+util.inherits(Sub,Base);
+//Sub仅仅继承了Base在原型中定义的函数，而构造函数内部创造的base属性和sayHello函数都没有被Sub继承
+//在原型中定义的属性不会被console.log作为对象的属性输出,但是可以通过对象拿到原型上的属性和方法，不管是不是继承到的，无则继承有则不用
+ 
+util.inspect(object,[showHidden],[depth],[colors])方法可以将任意对象转换为字符串，通常用于调试和错误输出
+util.isArray(object)如果给定的参数 "object" 是一个数组返回true，否则返回false。
+util.isRegExp(object)如果给定的参数"object"是一个正则表达式返回true，否则返回false。
+util.isDate(object)如果给定的参数 "object" 是一个日期返回true，否则返回false。
+util.isError(object)如果给定的参数 "object" 是一个错误对象返回true，否则返回false。
+ 
+var util = require('util');
+// function Base(){
+//     this.name = 'base';
+//     this.sayName = function(){
+//         console.log('hello' + this.name)
+//     }
+// }
+// Base.prototype.showName = function(){
+//     console.log(this.name)
+// }
+// Base.prototype.year = '11';
+// function Sub (){
+//     this.name = 'sub'
+// }
+// Sub.prototype.year = '12'
+// util.inherits(Sub,Base);
+// var s = new Sub();
+// s.showName()
+// s.sayName()
+// console.log(s)
+// console.log(s.year)
+//Sub仅仅继承了Base在原型中定义的函数，而构造函数内部创造的base属性和sayHello函数都没有被Sub继承
+//在原型中定义的属性不会被console.log作为对象的属性输出,但是可以通过对象拿到原型上的属性和方法，不管是不是继承到的，无则继承有则不用
+ 
+function Persion(){
+    this.name = 'persion';
+    this.toString = function(){
+        return this.name;
+    }
+}
+var p1 = new Persion();
+console.log(typeof util.inspect(p1))
+ 
+console.log(util.isArray([]))
+console.log(util.isRegExp(/some/));
+console.log(util.isDate(new Date()));
+console.log(util.isError(new Error()))
+ 
+ 
+fs
+2019年3月21日
+16:59
+ 
+文件系统fs模块，提供了文件的读取、写入、更名、删除、遍历目录、链接等POSIX文件系统操作
+fs模块中所有的操作都提供了异步的和同步的两个版
+ 
+fs.readFile(filename,[encoding],[callback(err,data)])
+如果不指定encoding，则callback就是第二个参数。回调函数提供两个参数err和data，err表示有没有错误发生，data是文件内容。如果指定了encoding，data是一个解析后的字符串，否则data将会是以Buffer形式表示的二进制数据。
+fs.readFileSync(filename, [encoding])是fs.readFile同步的版本。它接受和 fs.readFile 相同的参数，而读取到的文件内容会以函数返回值的形式返回。如果有错 误发生，fs将会抛出异常，你需要使用try和catch捕捉并处理异常
+fs.open(path, flags, [mode], [callback(err, fd)])是POSIX open函数的封装，类似于C语言标准库中的fopen函数。它接受两个必选参数，path为文件的路径， flags 可以是以下值r r+ w w+ a a+
+fs.read(fd, buffer, offset, length, position, [callback(err, bytesRead, buffer)])读取数据并写入buffer指向的缓冲区对象
+ 
+var fs = require('fs');
+// fs.readFile('input.txt','utf-8',function(err,data){
+//     if(err){
+//         console.log(err)
+//     }else{
+//         console.log(data)
+//     }
+// })
+// var filedata = fs.readFileSync('input.txt')
+// console.log(filedata)
+fs.open('input.txt','r',function(err,fd){
+    console.log(fd)
+    var buf = new Buffer(8);
+    fs.read(fd,buf,0,8,null,function(err,bytesRead,buffer){
+        console.log(bytesRead,buffer)
+    })
+})
+ 
+ 
+0322web
+2019年3月22日
+14:03
+ 
+web模块
+Web服务器一般指网站服务器，是指驻留于因特网上某种类型计算机的程序。
+Web服务器的基本功能就是提供Web信息浏览服务。它只需支持HTTP协议、HTML文档格式及URL，与客户端的网络浏览器配合。
+大多数web服务器都支持服务端的脚本语言（php、python、ruby）等，并通过脚本语言从数据库获取数据，将结果返回给客户端浏览器。
+目前最主流的三个Web服务器是Apache、Nginx、IIS。
+ 
+使用 Node 创建 Web 服务器
+//创建web服务器
+var http = require('http');
+var fs = require('fs');
+var url = require('url');
+//创建服务器
+http.createServer(function(request,response){
+    var pathname = url.parse(request.url).pathname;
+    console.log('接收到请求路径'+ pathname);
+    fs.readFile(pathname.substr(1),function(err,data){
+        if(err){
+            console.log(err);
+            response.writeHead(404,{"Content-Type":"text/html"});
+        }else{
+            response.writeHead(200,{"Content-Type":"text/html"});
+            //响应文件内容
+            response.write(data.toString());
+        }
+        //发送响应数据
+        response.end();
+    })
+}).listen(8081)
+//浏览器输入http://localhost:8081/index.html
+ 
+使用 Node 创建 Web 客户端
+var http = require('http');
+//用于请求的选项
+var options = {
+    host:'localhost',
+    port:'8081',
+    path:'/index.html',
+}
+//处理响应的回调函数
+var callback = function(response){
+    var body = '';
+    response.on('data',function(data){
+        body+=data;
+    })
+    response.on('end',function(){
+        //数据接受完成；
+        console.log(body);
+    })
+}
+//向服务端发送请求；
+var req = http.request(options,callback);
+req.end();
+ 
+ 
+rest
+2019年3月30日
+14:08
+ 
+REST
+表述性状态传递
+REST是设计风格而不是标准。REST通常基于使用HTTP，URI和XML（标准通用标记语言下的一个子集）以及HTML（标准通用标记语言下的一个应用）这些现有的广泛流行的协议和标准。REST通常使用JSON数据格式
+以下为REST基本架构的四个方法：
+GET - 用于获取数据。
+PUT - 用于添加数据。
+DELETE - 用于删除数据。
+POST - 用于更新或添加数据

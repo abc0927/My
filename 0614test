@@ -1,0 +1,202 @@
+vue
+2019年6月5日
+10:24
+ 
+router路由器，为VueRouter的实例，相当于一个全局的路由器对象,含有很多方法及属性this.$router.push
+route路由，当前跳转的路由对象this.$route.query
+query传参是针对path的，params传参是针对name的
+ 
+ 
+bind
+2019年6月13日
+10:22
+ 
+        //bind原理
+        Function.prototype.bind=function(thisArg){
+            var _this=this
+            return function(){
+                _this.apply(thisArg)
+            }
+        }
+ 
+        function f(){
+            console.log('f.this',this)
+        }
+        // let fn=f.bind(1).bind(2)
+        // fn() bind链式调用解释为下面结果：
+        f1=function(){
+            // console.log('f1.this',this)
+            f.apply(1)
+        }
+        f2=function(){
+            // console.log('f2.this',this);
+            f1.apply(2);
+        }
+        f2()
+        /*  f2()=>f1.apply(2)=>f1()=>f.apply(1)=>f()
+            f2() 执行的是：f1.apply(2) 只会影响f1的this，不会影响到f的this
+            f1.apply(2)回去执行f1,即f1(),并绑定f1的this为2,
+            f1() 执行的是：f.apply(1) 影响到f的this，绑定到1
+            this: window => Number{2} => Number{1}
+        */
+ 
+        //bind用法：var fn2=fn.bind(obj,arg1,...)
+        var a='window.a'
+        var obj={
+            a:'obj.a'
+        }
+        var module={
+            a:'module.a',
+            show:function(b,c){
+                console.log(this.a,b,c)
+            },
+            set1:function(){
+                setTimeout(function(){
+                    console.log(this.a)//window,需要绑定到obj
+                }, 1000);
+            },
+            set2:function(){
+                console.log(this.a)
+            },
+            set3:function(){
+                setTimeout(this.set2,1000)
+            },
+            set4:function(){
+                setTimeout(this.set2.bind(this),1000)
+            }
+        }
+        // module.show()//this为module
+        // var show2=module.show
+        // show2()//this为window
+        // let show3=module.show.bind(obj,11);//  绑定到obj，返回新函数show3，参数11排在33前面
+        // show3(33)
+        // module.set1()//window.a 在setTimeout内部函数中this为window
+        // var set11=module.set1.bind(obj)()//window.a  this绑定的还是window，无法更改绑定setTimeout内部函数的this,通过改写setTimeout内部函数为箭头函数
+        // module.set2()//module.a 
+        // module.set3()//window.a 在setTimeout内部函数中this为window 等同于set1
+        // module.set4()//module.a 把set2环境绑定在module内部
+        /*
+        1返回新函数（绑定函数），原函数不会改变
+        2新函数的this指向bind第一个参数（转换第一个参数为对象）.bind(1)绑定到Number对象
+        3给新函数传入预设参数，优先于传入绑定函数的参数
+        4伪数组对象调用数组方法
+ 
+        bind、apply、call区别：
+        1、都是改变上下文 this 指向
+        2、bind返回新函数不会自动执行；call/apply 是直接使用在函数上，直接执行
+        3、apply 和 call 的区别就是apply第二个参数为数组
+        */
+ 
+        //把传入的参数调用slice方法转换成数组
+        function arrfn(){
+            var slice=Array.prototype.slice
+            console.log(arguments)//arguments是个类数组对象，使用apply将slice方法绑定到arguments对象，arguments对象调用slice方法，使用数组传入参数
+            return slice.apply(arguments,[0,2])
+        }
+        // console.log(arrfn(4,5,6))//[4,5]
+ 
+ 
+模块加载与导出
+2019年6月14日
+11:22
+ 
+/**ES6模块导出与加载
+ * 关于导出
+ * 提供对外接口名称，接口名与模块内部变量之间，建立了一一对应的关系
+ * 导出方式：
+ * 正常输出：可以单个export，可以整体export {}
+ * 1、export var m=1                   => import {m} from ''           //import * as ex from ''
+ * 2、var m=1 ; export {m,m as mm}     => import {mm as mmm} from ''  //import * as ex from ''
+ * 3、var m=1 ; export m //不能这么写报错
+ * 默认输出（一个模块只能有一个）export default命令其实是输出一个叫做default的变量
+ * 1、export default function (){}     => import any from ''
+ * 2、var m=1 ; export default m;      => import any from ''
+ * 3、export default var m=1 //不能这么写报错
+ * 正常输出和默认输出可以在一个模块共存   => import default,{m} from ''
+ * 
+ * 关于导入
+ * 1动态引用，只读变量：可以改导入对象的属相，不可以改导入变量的值
+ * 2会自动提升到顶部
+ * 3import语句会执行所加载的模块 import './ex1.js'
+ * 加载方式：
+ * 针对正常输出的加载：export
+ * 1、使用大括号加载具体使用的接口名称:import {m} from ''
+ * 2、使用*号加载整体为一个对象:import * as ex from ''
+ * 针对默认输出的加载：export default
+ * 1、不用大括号，可以使用任意名:import any from ''
+ * 
+ * 关于import()
+ * import()函数解决import不能在运行时加载问题（动态加载，同步加载）返回promise对象,应用于：条件加载，按需加载，模块动态路径加载
+ * import编译时加载（静态加载）;require运行时加载（动态加载,异步加载）
+ * if(){
+ *  import('').then(module=>{
+ *      module.fn()
+ *  })
+ * }
+ * 
+ * 关于浏览器脚本加载
+ * 加载脚本 默认type="application/javascript" 可省略
+ * 异步加载（防堵塞）
+ * <script src="path/to/myModule.js" defer></script> defer是“渲染完再执行;按位置顺序执行”，等到整个页面在内存中正常渲染结束（DOM 结构完全生成，以及其他脚本执行完成），才会执行；
+ * <script src="path/to/myModule.js" async></script> async是“下载完就执行;按时间顺序执行”。一旦下载完，渲染引擎就会中断渲染，执行这个脚本以后，再继续渲染
+ * 模块加载 设置type="module"；浏览器对于带有type="module"的<script>，都是异步加载，等效于defer
+ * <script type="module" src="./foo.js"></script>
+ * 模块内部this为undefined
+ * 
+ * 关于node模块导出与加载：CommonJS 模式
+ * CommonJS 模块的输出都定义在module.exports这个属性上面，被视为默认输出default
+ * ES6模块加载CommonJS模块：
+ * module.exports = {
+        foo: 'hello',
+        bar: 'world'
+    };
+ * import any from ''; =>any = {}
+ * import {default as any} from ''; => any={}
+ * import * as any from ''; =>  any.default = {}
+ * 如果模块名不含路径，那么import命令会去node_modules目录寻找这个模块
+ * 
+ * CommonJS模块加载ES6模块：
+ * 使用import()函数
+ * export var m={a:'1'}
+ * async function fn () {
+        var any0 = await import ('./')//promise
+        console.log(any0.m)
+    }
+    fn()
+ */
+ 
+ 
+flex布局
+2019年6月14日
+16:22
+ 
+flex:
+ 
+容器：
+display:flex;
+flex-direction:row | row-reverse | column | column-reverse修改主轴的方向
+flex-wrap: nowrap | wrap | wrap-reverse可使得主轴上的元素不折行、折行、反向折行
+flex-flow属性是flex-direction属性和flex-wrap属性的简写形式，默认值为row nowrap
+justify-content:flex-start | flex-end | center | space-between | space-around属性定义了项目在主轴上的对齐方式:左对齐/右对齐/居中/两端对齐，项目之间的间隔都相等/每个项目两侧的间隔相等。所以，项目之间的间隔比项目与边框的间隔大一倍
+align-items: flex-start | flex-end | center | baseline | stretch（默认值)属性定义项目在交叉轴上如何对齐:交叉轴的起点对齐/交叉轴的终点对齐/交叉轴的中点对齐/项目的第一行文字的基线对齐/如果项目未设置高度或设为auto，将占满整个容器的高度
+align-content: flex-start | flex-end | center | space-between | space-around | stretch属性定义了多根轴线的对齐方式。（把每一行看成一个项目）如果项目只有一根轴线，该属性不起作用
+ 
+项目：
+order属性定义项目的排列顺序。数值越小，排列越靠前，默认为0。
+flex-grow属性定义项目的放大比例，默认为0，即如果存在剩余空间，也不放大。如果一个项目的flex-grow属性为2，其他项目都为1，则前者占据的剩余空间将比其他项多一倍。
+flex-shrink属性定义了项目的缩小比例，默认为1，即如果空间不足，该项目将缩小。如果一个项目的flex-shrink属性为0，其他项目都为1，则空间不足时，前者不缩小。
+flex-basis属性定义了在分配多余空间之前，项目占据的主轴空间（main size）。浏览器根据这个属性，计算主轴是否有多余空间。它的默认值为auto，即项目的本来大小，可以设为跟width或height属性一样的值，则项目将占据固定空间，如果设置为0称作绝对弹性元素
+flex属性是flex-grow, flex-shrink 和 flex-basis的简写，默认值为0 1 auto。后两个属性可选
+align-self：auto | flex-start | flex-end | center | baseline | stretch;属性允许单个项目有与其他项目不一样的对齐方式，可覆盖align-items属性。默认值为auto，表示继承父元素的align-items属性，如果没有父元素，则等同于stretch
+ 
+关于flex-basis对伸缩的影响
+可分配尺寸=容器宽度-所有项目宽度（如果项目设置了flex-basis，则减的是flex-basis的值）
+项目分配到的尺寸=可分配尺寸/项目flex-grow总值
+项目伸缩后的尺寸=项目分配到的尺寸+项目宽度（如果项目设置了flex-basis，则加的是flex-basis的值）
+设置所有项目flex-basis:0则所有项目不论自身尺寸，伸缩后尺寸都相同（绝对弹性元素）
+ 
+关于flex复合属性
+flex: 1 = flex: 1 1 0%
+flex: 2 = flex: 2 1 0%
+flex: auto = flex: 1 1 auto;
+flex: none = flex: 0 0 auto; // 常用于固定尺寸 不伸缩

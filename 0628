@@ -1,0 +1,713 @@
+vue
+2019年6月5日
+10:24
+ 
+router路由器，为VueRouter的实例，相当于一个全局的路由器对象,含有很多方法及属性this.$router.push
+route路由，当前跳转的路由对象this.$route.query
+query传参是针对path的，params传参是针对name的
+ 
+ 
+bind
+2019年6月13日
+10:22
+ 
+        //bind原理
+        Function.prototype.bind=function(thisArg){
+            var _this=this
+            return function(){
+                _this.apply(thisArg)
+            }
+        }
+ 
+        function f(){
+            console.log('f.this',this)
+        }
+        // let fn=f.bind(1).bind(2)
+        // fn() bind链式调用解释为下面结果：
+        f1=function(){
+            // console.log('f1.this',this)
+            f.apply(1)
+        }
+        f2=function(){
+            // console.log('f2.this',this);
+            f1.apply(2);
+        }
+        f2()
+        /*  f2()=>f1.apply(2)=>f1()=>f.apply(1)=>f()
+            f2() 执行的是：f1.apply(2) 只会影响f1的this，不会影响到f的this
+            f1.apply(2)回去执行f1,即f1(),并绑定f1的this为2,
+            f1() 执行的是：f.apply(1) 影响到f的this，绑定到1
+            this: window => Number{2} => Number{1}
+        */
+ 
+        //bind用法：var fn2=fn.bind(obj,arg1,...)
+        var a='window.a'
+        var obj={
+            a:'obj.a'
+        }
+        var module={
+            a:'module.a',
+            show:function(b,c){
+                console.log(this.a,b,c)
+            },
+            set1:function(){
+                setTimeout(function(){
+                    console.log(this.a)//window,需要绑定到obj
+                }, 1000);
+            },
+            set2:function(){
+                console.log(this.a)
+            },
+            set3:function(){
+                setTimeout(this.set2,1000)
+            },
+            set4:function(){
+                setTimeout(this.set2.bind(this),1000)
+            }
+        }
+        // module.show()//this为module
+        // var show2=module.show
+        // show2()//this为window
+        // let show3=module.show.bind(obj,11);//  绑定到obj，返回新函数show3，参数11排在33前面
+        // show3(33)
+        // module.set1()//window.a 在setTimeout内部函数中this为window
+        // var set11=module.set1.bind(obj)()//window.a  this绑定的还是window，无法更改绑定setTimeout内部函数的this,通过改写setTimeout内部函数为箭头函数
+        // module.set2()//module.a 
+        // module.set3()//window.a 在setTimeout内部函数中this为window 等同于set1
+        // module.set4()//module.a 把set2环境绑定在module内部
+        /*
+        1返回新函数（绑定函数），原函数不会改变
+        2新函数的this指向bind第一个参数（转换第一个参数为对象）.bind(1)绑定到Number对象
+        3给新函数传入预设参数，优先于传入绑定函数的参数
+        4伪数组对象调用数组方法
+ 
+        bind、apply、call区别：
+        1、都是改变上下文 this 指向
+        2、bind返回新函数不会自动执行；call/apply 是直接使用在函数上，直接执行
+        3、apply 和 call 的区别就是apply第二个参数为数组
+        */
+ 
+        //把传入的参数调用slice方法转换成数组
+        function arrfn(){
+            var slice=Array.prototype.slice
+            console.log(arguments)//arguments是个类数组对象，使用apply将slice方法绑定到arguments对象，arguments对象调用slice方法，使用数组传入参数
+            return slice.apply(arguments,[0,2])
+        }
+        // console.log(arrfn(4,5,6))//[4,5]
+ 
+ 
+模块加载与导出
+2019年6月14日
+11:22
+ 
+/**ES6模块导出与加载
+ * 关于导出
+ * 提供对外接口名称，接口名与模块内部变量之间，建立了一一对应的关系
+ * 导出方式：
+ * 正常输出：可以单个export，可以整体export {}
+ * 1、export var m=1                   => import {m} from ''           //import * as ex from ''
+ * 2、var m=1 ; export {m,m as mm}     => import {mm as mmm} from ''  //import * as ex from ''
+ * 3、var m=1 ; export m //不能这么写报错
+ * 默认输出（一个模块只能有一个）export default命令其实是输出一个叫做default的变量
+ * 1、export default function (){}     => import any from ''
+ * 2、var m=1 ; export default m;      => import any from ''
+ * 3、export default var m=1 //不能这么写报错
+ * 正常输出和默认输出可以在一个模块共存   => import default,{m} from ''
+ * 
+ * 关于导入
+ * 1动态引用，只读变量：可以改导入对象的属相，不可以改导入变量的值
+ * 2会自动提升到顶部
+ * 3import语句会执行所加载的模块 import './ex1.js'
+ * 加载方式：
+ * 针对正常输出的加载：export
+ * 1、使用大括号加载具体使用的接口名称:import {m} from ''
+ * 2、使用*号加载整体为一个对象:import * as ex from ''
+ * 针对默认输出的加载：export default
+ * 1、不用大括号，可以使用任意名:import any from ''
+ * 
+ * 关于import()
+ * import()函数解决import不能在运行时加载问题（动态加载，同步加载）返回promise对象,应用于：条件加载，按需加载，模块动态路径加载
+ * import编译时加载（静态加载）;require运行时加载（动态加载,异步加载）
+ * if(){
+ *  import('').then(module=>{
+ *      module.fn()
+ *  })
+ * }
+ * 
+ * 关于浏览器脚本加载
+ * 加载脚本 默认type="application/javascript" 可省略
+ * 异步加载（防堵塞）
+ * <script src="path/to/myModule.js" defer></script> defer是“渲染完再执行;按位置顺序执行”，等到整个页面在内存中正常渲染结束（DOM 结构完全生成，以及其他脚本执行完成），才会执行；
+ * <script src="path/to/myModule.js" async></script> async是“下载完就执行;按时间顺序执行”。一旦下载完，渲染引擎就会中断渲染，执行这个脚本以后，再继续渲染
+ * 模块加载 设置type="module"；浏览器对于带有type="module"的<script>，都是异步加载，等效于defer
+ * <script type="module" src="./foo.js"></script>
+ * 模块内部this为undefined
+ * 
+ * 关于node模块导出与加载：CommonJS 模式
+ * CommonJS 模块的输出都定义在module.exports这个属性上面，被视为默认输出default
+ * ES6模块加载CommonJS模块：
+ * module.exports = {
+        foo: 'hello',
+        bar: 'world'
+    };
+ * import any from ''; =>any = {}
+ * import {default as any} from ''; => any={}
+ * import * as any from ''; =>  any.default = {}
+ * 如果模块名不含路径，那么import命令会去node_modules目录寻找这个模块
+ * 
+ * CommonJS模块加载ES6模块：
+ * 使用import()函数
+ * export var m={a:'1'}
+ * async function fn () {
+        var any0 = await import ('./')//promise
+        console.log(any0.m)
+    }
+    fn()
+ */
+ 
+ 
+flex布局
+2019年6月14日
+16:22
+ 
+flex:
+ 
+容器：
+display:flex;
+flex-direction:row | row-reverse | column | column-reverse修改主轴的方向
+flex-wrap: nowrap | wrap | wrap-reverse可使得主轴上的元素不折行、折行、反向折行
+flex-flow属性是flex-direction属性和flex-wrap属性的简写形式，默认值为row nowrap
+justify-content:flex-start | flex-end | center | space-between | space-around属性定义了项目在主轴上的对齐方式:左对齐/右对齐/居中/两端对齐，项目之间的间隔都相等/每个项目两侧的间隔相等。所以，项目之间的间隔比项目与边框的间隔大一倍
+align-items: flex-start | flex-end | center | baseline | stretch（默认值)属性定义项目在交叉轴上如何对齐:交叉轴的起点对齐/交叉轴的终点对齐/交叉轴的中点对齐/项目的第一行文字的基线对齐/如果项目未设置高度或设为auto，将占满整个容器的高度
+align-content: flex-start | flex-end | center | space-between | space-around | stretch属性定义了多根轴线的对齐方式。（把每一行看成一个项目）如果项目只有一根轴线，该属性不起作用
+ 
+项目：
+order属性定义项目的排列顺序。数值越小，排列越靠前，默认为0。
+flex-grow属性定义项目的放大比例，默认为0，即如果存在剩余空间，也不放大。如果一个项目的flex-grow属性为2，其他项目都为1，则前者占据的剩余空间将比其他项多一倍。
+flex-shrink属性定义了项目的缩小比例，默认为1，即如果空间不足，该项目将缩小。如果一个项目的flex-shrink属性为0，其他项目都为1，则空间不足时，前者不缩小。
+flex-basis属性定义了在分配多余空间之前，项目占据的主轴空间（main size）。浏览器根据这个属性，计算主轴是否有多余空间。它的默认值为auto，即项目的本来大小，可以设为跟width或height属性一样的值，则项目将占据固定空间，如果设置为0称作绝对弹性元素
+flex属性是flex-grow, flex-shrink 和 flex-basis的简写，默认值为0 1 auto。后两个属性可选
+align-self：auto | flex-start | flex-end | center | baseline | stretch;属性允许单个项目有与其他项目不一样的对齐方式，可覆盖align-items属性。默认值为auto，表示继承父元素的align-items属性，如果没有父元素，则等同于stretch
+ 
+关于flex-basis对伸缩的影响
+可分配尺寸=容器宽度-所有项目宽度（如果项目设置了flex-basis，则减的是flex-basis的值）
+项目分配到的尺寸=可分配尺寸/项目flex-grow总值
+项目伸缩后的尺寸=项目分配到的尺寸+项目宽度（如果项目设置了flex-basis，则加的是flex-basis的值）
+设置所有项目flex-basis:0则所有项目不论自身尺寸，伸缩后尺寸都相同（绝对弹性元素）
+ 
+关于flex复合属性
+flex: 1 = flex: 1 1 0%
+flex: 2 = flex: 2 1 0%
+flex: auto = flex: 1 1 auto;
+flex: none = flex: 0 0 auto; // 常用于固定尺寸 不伸缩
+ 
+ 
+ 
+ 
+promise
+2019年6月18日
+15:33
+        Promise是一个对象，是个构造函数，resolve和reject是两个函数
+        Promise 新建后就会立即执行，调用resolve或reject并不会终结 Promise 的参数函数的执行，resolve或rejec会在事件轮询最后执行但是会在代码位置锁定状态，且不会再改变，所以resolve后面的错误不会被捕获，且经常在resolve或rejec前面加 return
+        resolve函数的作用是，将Promise对象的状态从“未完成”变为“成功”（即从 pending 变为 resolved），在异步操作成功时调用，并将异步操作的结果，作为参数传递出去；
+   reject函数的作用是，将Promise对象的状态从“未完成”变为“失败”（即从 pending 变为 rejected），在异步操作失败时调用，并将异步操作报出的错误，作为参数传递出去。
+        Promise.prototype.then()
+        then和catch定义在Promise.prototype
+        Promise实例生成以后，可以用then方法分别指定resolved状态和rejected状态的回调函数;调用resolve函数和reject函数时带有参数，那么它们的参数会被传递给回调函数
+        then方法可以接受两个回调函数作为参数,第二个函数是可选的，不一定要提供,这两个函数都接受Promise对象传出的值作为参数。一般使用catch替换then的第二个参数
+        resulve返回异步操作（promise对象）时，自己状态由返回的promise状态决定
+        then方法返回的是一个新的Promise实例，所以可以链式调用,采用链式的then,可以指定一组按照次序调用的回调函数,
+        前一个回调函数，有可能返回的还是一个Promise对象（即有异步操作），这时后一个回调函数，就会等待该Promise对象的状态发生变化，才会被调用
+        Promise.prototype.catch()
+        catch方法是.then(null, rejection)或.then(undefined, rejection)的别名，用于指定发生错误时的回调函数；then方法指定的回调函数，如果运行中抛出错误，也会被catch方法捕获
+        reject方法的作用，等同于抛出错误，让catch捕获，
+        Promise 对象的错误具有“冒泡”性质，会一直向后传递，直到被捕获为止。也就是说，错误总是会被下一个catch语句捕获；如果没有使用catch方法指定错误处理的回调函数，Promise 对象抛出的错误不会传递到外层代码，即不会有任何反应：Promise 会吃掉错误；unhandledRejection事件可以捕获
+        catch方法返回的还是一个 Promise 对象，因此后面还可以接着调用then方法
+        Promise.prototype.finally()
+        用于指定不管 Promise 对象最后状态如何，都会执行的操作。该方法是 ES2018 引入标准的。finally回调函数不接收任何参数，且操作与前面promise状态无关 .finally(()=>{})
+        finally方法里面的操作，应该是与状态无关的，不依赖于 Promise 的执行结果。
+        Promise.all()
+        将多个 Promise 实例，包装成一个新的 Promise实例: const p = Promise.all([p1, p2, p3]);
+        Promise.all方法接受一个数组作为参数，p1、p2、p3都是 Promise 实例,如果不是，会先调用Promise.resolve方法，将参数转为 Promise 实例，再进一步处理;
+        只要p1、p2、p3之中有一个被rejected，p的状态就变成rejected，此时第一个被reject的实例的返回值，会传递给p的回调函数
+        只有p1、p2、p3的状态都变成fulfilled，p的状态才会变成fulfilled，此时p1、p2、p3的返回值组成一个数组，传递给p的回调函数
+        只有所有实例的状态都变成fulfilled，或者其中有一个变为rejected，才会调用Promise.all方法后面的回调函数。
+        如果作为参数的 Promise 实例，自己定义了catch方法，那么它一旦被rejected，并不会触发Promise.all()的catch方法：因为实例会先执行自己的catch，catch后会使promise状态转变为resolve
+        Promise.race() 
+        将多个 Promise 实例，包装成一个新的 Promise 实例    const p = Promise.race([p1, p2, p3]);
+        只要p1、p2、p3之中有一个实例率先改变状态，p的状态就跟着改变。那个率先改变的 Promise 实例的返回值，就传递给p的回调函数：应用限定时间执行异步，超时reject执行catch回调
+        Promise.resolve() 
+        将现有对象转为 Promise 对象，该对象状态为resolve，执行then的回调
+        Promise.resolve('foo')等价于new Promise(resolve => resolve('foo'))
+        参数：
+        如果参数是 Promise 实例，那么Promise.resolve将不做任何修改、原封不动地返回这个实例。
+        如果参数是一个原始值，或者是一个不具有then方法的对象，则Promise.resolve方法返回一个新的 Promise 对象，状态为resolved
+        如果不带参数，直接返回一个resolved状态的 Promise 对象。
+        setTimeout(fn, 0)在下一轮“事件循环”开始时执行，Promise.resolve()在本轮“事件循环”结束时执行
+        Promise.reject()
+        返回一个新的 Promise 实例，该实例的状态为rejected，执行catch的回调
+        const p = Promise.reject('出错了');等同于const p = new Promise((resolve, reject) => reject('出错了'))
+ 
+调用链：
+var p1=function (){
+            return new Promise((resolve,reject)=>{
+                console.log('promise1 function')
+                setTimeout(()=>{
+                    return resolve('promise1 data')
+                },5000)
+            })
+        }
+        var p2=function (){
+            return new Promise((resolve,reject)=>{
+                console.log('promise2 function')
+                setTimeout(()=>{
+                    return resolve('promise2 data')
+                },1000)
+            })
+        }
+        var p3=function (){
+            return new Promise((resolve,reject)=>{
+                console.log('promise3 function')
+                setTimeout(()=>{
+                    return resolve('promise3 data')
+                },100)
+            })
+        }
+        var p4=function (){
+            return new Promise((resolve,reject)=>{
+                console.log('promise4 function')
+                setTimeout(()=>{
+                    return resolve('promise4 data')
+                },1000)
+            })
+        }
+        // p1().then((r)=>{
+        //     console.log(r)
+        //     return p2()//调用p2返回的是promise对象需要return出去调用then方法
+        // }).then((r)=>{
+        //     console.log(r)
+        // })
+        let chain=[p1,p2,p3,p4]//数组内为promise异步函数（时间不确定），如何确保按数组顺序执行，执行目标promise.then(f1).then(f2).then(f3).then(f4)（效果如上，调用链）
+        // 不去调用chain中的函数，而是创建一个新的resolve状态的promise,作为整个调用的起始函数
+        var promise = Promise.resolve('config');//等价于 var promise = new Promise(())//将普通对象转换为promse对象，拥有promise的方法 then
+        // console.log(promise)//resolve状态
+        // console.log(promise.then(p1))//pending状态 等价于直接执行p1() 执行后放回的是promise对象需要调用then方法拿到resolve状态的数据
+ 
+        // 把chain中的所有函数添加promise对象的then中去执行
+        while (chain.length) {
+            promise = promise.then(chain.shift());//每个promise都是resolve状态
+            // promise = promise.then( chain.shift(), chain.shift() );//每个promse状态不一定，传递一组，成功回调第一个，失败回调第二个
+        }
+        //是如何保证按顺序执行的？ promise=promise.then(),下次的promise依赖上次的执行结果
+ 
+ 
+vue通信
+2019年6月24日
+14:58
+ 
+关于vue的DOM更新问题
+1通过直接更改对象属性或数组项是无法实现表格表单对应数据刷新
+1针对对象
+Obj.prop = value  无法实现，需使用
+Vue.set(obj,'prop',value)
+2针对数组，
+ arr[index] = value 无法实现，需使用
+Vue.set(arr,index,newValue)或者
+Arr.splice(index,1,newValue)
+ 
+使用nextTick
+ 
+1在Vue生命周期的created()钩子函数进行的DOM操作一定要放在Vue.nextTick()的回调函数中 此时回调会发生在mounted之后
+2在数据变化后要执行的某个操作，而这个操作需要使用随数据改变而改变的DOM结构的时候，这个操作都应该放进Vue.nextTick()的回调函数中
+3为了在数据变化之后等待 Vue 完成更新 DOM ，可以在数据变化之后立即使用Vue.nextTick(callback) 。这样回调函数在 DOM 更新完成后就会调用。打开弹窗，调用弹窗dom
+ 
+使用vuex传值三部
+1State:{paramValues }
+2mutations：{
+changeParamValues(state,val){
+state.paramValues = val;
+},
+3this.$store.commit('changeParamValues', this.rulesContent);
+4在组件中的data或者computed接受store：count:this.$store.state.count
+5在store中的其他位置引用state变量： state.username
+6使用actions的异步更改状态，三步骤：
+  mutations: {
+    add(state, n) {
+      state.count += n
+    }
+  },
+  actions: {
+    incrementAsyncWithValue (context, value) {
+      setTimeout(() => {
+        context.commit('add', value)
+      }, 1000)
+    }
+  },
+this.$store.dispatch('incrementAsyncWithValue', 5)
+ 
+ 
+ 
+ 
+1. state
+ 
+state就是全局的状态（数据源），我们可以用以下方式在Vue 组件中获得Vuex的state状态
+template
+  <div>
+    {{ $store.state.count }}
+  </div>
+ 
+script
+console.log(this.$store.state.count)
+ 
+2. getters
+ 
+getters其实可以认为是 store 的计算属性，用法和计算属性差不多。
+定义getter：
+  getters: {
+    done(state) {
+      return state.count + 5;
+    },
+  }
+ 
+使用getter
+console.log(this.$store.getters.done)
+ 
+3. mutations
+ 
+mutations是操作state的唯一方法，即只有mutations方法能够改变state状态值
+  mutations: {
+    // 提交载荷 Payload
+    add(state, n) {
+      state.count += n
+    }
+  },
+this.$store.commit('add', 10)
+ 
+这里只是传了一个数字，在大多数情况下，载荷应该是一个对象，这样可以包含多个字段并且记录的 mutation 会更易读。
+mutations方法必须是同步方法！
+为了处理异步方法，actions出现了,•Action 还是得通过 mutation 方法来修改state
+ 
+4. actions(三部，1定义mutations2定义action3组件分发)
+ 
+  mutations: {
+    // 提交载荷 Payload
+    add(state, n) {
+      state.count += n
+    }
+  },
+  actions: {
+    incrementAsyncWithValue (context, value) {
+      setTimeout(() => {
+        context.commit('add', value)
+      }, 1000)
+    }
+  },
+this.$store.dispatch('incrementAsyncWithValue', 5)
+ 
+ 
+context是与 store 实例具有相同方法和属性的对象。可以通过context.state和context.getters来获取 state 和 getters。
+ 
+组件通信
+ 
+组件传参：
+访问父组件传递的参数 或方法
+this.$parent.$refs.tree_pro.level
+使用this.$parent. 同进入父组件的this
+可以访问到父组件自定义的所有data数据及methods方法等
+$children是数组
+ 
+子组件触发父组件clickHref事件
+this.$emit("clickHref", this.current_navs_index.join("")); 
+ 
+父子组件通信：
+子组件使用props接收，数据类型：数组，对象（值类型，数据验证，默认值）
+父组件在组件应用位置传入
+vue中数字、数组、布尔、对象数据类型被看成是表达式，传值需要bind绑定
+ 
+ 
+props:['a','b']
+props: {
+  title: String,
+  likes: Number,
+  isPublished: Boolean,
+  commentIds: Array,
+  author: Object,
+}
+  props: {
+    // 基础的类型检查 (`null` 和 `undefined` 会通过任何类型验证)
+    propA: Number,
+    propB: [String, Number],
+    // 必填的字符串
+    propC: {
+      type: String,
+      required: true
+    },
+    // 带有默认值的数字
+    propD: {
+      type: Number,
+      default: 100
+    },
+    // 带有默认值的对象
+    propE: {
+      type: Object,
+      // 对象或数组默认值必须从一个工厂函数获取
+      default: function () {
+        return { message: 'hello' }
+      }
+    },
+    // 自定义验证函数
+    propF: {
+      validator: function (value) {
+        // 这个值必须匹配下列字符串中的一个
+        return ['success', 'warning', 'danger'].indexOf(value) !== -1
+      }
+    }
+  }
+ 
+ 
+拿到的prop需要更改：
+1、这个 prop 用来传递一个初始值；这个子组件接下来希望将其作为一个本地的 prop 数据来使用。在这种情况下，最好定义一个本地的 data 属性并将这个 prop 用作其初始值
+2、这个 prop 以一种原始的值传入且需要进行转换。在这种情况下，最好使用这个 prop 的值来定义一个计算属性
+ 
+ 
+class 和 style特性合并，其他特性父组件会替换掉子组件特性
+传递一个非 prop 特性是指传向一个组件，但是该组件并没有相应 prop 定义的特性，改特性会自动添加到子组件的跟元素上
+ 
+ 
+ 
+ 
+何时查询后台数据问题：
+如果是弹窗，父组件执行：
+      this.flowId=row.flowId
+      this.advancedsearchdetailvisible = true;
+      this.$nextTick(()=>{
+        this.$refs.flowInformation.getFlowDetail(this.flowId)
+      })
+如果路由跳转，在父组件mounted执行：
+this.flowId=this.$route.query.flowId
+this.$refs.flowInformation.getFlowDetail(this.flowId)
+ 
+路由跳转传参数a跳到b
+1通过vuex传递
+a把要跳转的参数传递到store，b去store里拿这个数据
+2通过路由跳转传参实现
+a组件
+sendParams () {
+        this.$router.push({
+            path: 'yourPath', 
+            name: '要跳转的路径的 name,在 router 文件夹下的 index.js 文件内找',
+            params: { 
+                name: 'name', 
+                dataObj: this.msg
+            }
+            /*query: {
+                name: 'name', 
+                dataObj: this.msg
+            }*/
+        })
+      }
+ 
+b组件
+ methods: {
+      getParams () {
+        // 取到路由带过来的参数 
+        let routerParams = this.$route.params.dataobj
+        // 将数据放在当前组件的数据内
+        this.msg = routerParams
+      }
+    },
+    watch: {
+    // 监测路由变化,只要变化了就调用获取路由参数方法将数据存储本组件即可
+      '$route': 'getParams'
+    }
+ 
+ 
+router传参
+ 
+传递
+this.$router.push({
+  path: "/00",
+  query: {
+     ateName:transferProject.ateName,
+  }
+})
+接收
+最好在created中接受
+mounted(){
+var getQuery  = this.$route.query;
+this.ate_Name = getQuery.ateName.trim();
+}
+ 
+ 
+ 
+ 
+@mouseenter="enter" @mouseleave="leave"
+ 
+钩子函数
+beforeCreate 都拿不到
+created  拿得到this.$data和data数据，拿不到this.$el
+其余钩子都能到所有数据
+ 
+ 
+ 
+ 
+ 
+输入框输入正整数
+2019年6月25日
+11:54
+ 
+## ^ 匹配字符串的开始。
+## $ 匹配字符串的结尾。
+## \b 匹配一个单词的边界。
+## \d 匹配任意数字。
+## \D 匹配任意非数字字符。
+## x? 匹配一个可选的 x 字符 (换言之，它匹配 1 次或者 0 次 x 字符)。
+## x* 匹配0次或者多次 x 字符。
+## x+ 匹配1次或者多次 x 字符。
+## x{n,m} 匹配 x 字符，至少 n 次，至多 m 次。
+## (a|b|c) 要么匹配 a，要么匹配 b，要么匹配 c。
+## (x) 一般情况下表示一个记忆组 (remembered group)。你可以利用 re.search 函数返回对象的 groups() 函数获取它的值。
+## 正则表达式中的点号通常意味着 “匹配任意单字符”
+语法：/正则表达式主体/修饰符  i不区分大小写 g全局匹配 m多行匹配
+正则不写/g，默认查找符合的第一个子字符串就跳出
+ 
+字符串方法（search()、replace()、match()、split()）
+search()方法，用于检索指定字符串的子字符串，并返回子字符串的起始位置。第一位是0  str.search(/search/i)
+replace()方法，用在字符串中的一些字符替换另一些字符，或替换与正则表达式匹配的字符串。str.replace(/replace/i, '替换')   str.replace('replace','替换')
+match()方法，可在字符串内检索指定的值，或找到一个或多个正则表达式的匹配，并以数组形式返回匹配结果。str.match(/is/gi)
+split()方法，用于把一个字符串分割成字符串数组
+RegExp对象方法（compile()、exec()、test()）。
+语法：var patt = new RegExp(pattern,modifiers); 或 var patt = /pattern/modifiers;
+　　pttern为表达式，modifiers为修饰符用于指定全局匹配g，不区分大小写i，和多行比配m。
+compile()方法，用于在脚本执行过程中编译正则表达式，也可用于改变和重新编译正则表达式。
+patt = /dog/g;patt.compile(patt);//patt = new RegExp('dog','g');patt.compile('dog','g');
+exec()方法，用于检索字符串中是否有正则表达式的匹配值，有则返回匹配值，否则返回null。
+var patt = /cat/g; patt.exec(str)
+test()方法，用于检测字符是否匹配某个模式，有则返回true，否则返回false。
+patt.test(str)
+ 
+限制输入框输入正整数,不包含小数：自定义指令加事件校验
+ 
+ Vue.directive('enterNumber', {
+   inserted: function (el) {
+     el.addEventListener("keypress",function(e){
+       e = e || window.event;
+       let charcode = typeof e.charCode == 'number' ? e.charCode : e.keyCode;
+       let re = /\d/;
+       if(!re.test(String.fromCharCode(charcode)) && charcode > 9 && !e.ctrlKey){
+           if(e.preventDefault){
+               e.preventDefault();
+           }else{
+               e.returnValue = false;
+           }                            
+       }
+     });
+   }
+ });
+ 
+<input :ref="'quotaNum'+index"  v-enterNumber type="number" min="1" v-model="item.quotaNum" @change="checkquotaNum(item.quotaNum,index)" />
+ 
+ 
+            checkquotaNum(value,index,e){//检测灰度发行配置额度
+                let refName='quotaNum'+index
+                if (value < 1 ) {
+                    this.$message.warning("输入值为不能小于1的整数")
+                    this.$refs[refName][0].focus()
+                    this.paramReleaseForm.subStrategys[index].quotaNum=1
+                }else{//过滤掉开头的0
+                    this.paramReleaseForm.subStrategys[index].quotaNum=parseInt(value,10)
+//只能通过更改绑定值修改输入框的值，使用this.$refs[refName][0].value=1 这个无效
+                }
+            },
+ 
+ 
+vue自定义指令：通过v-使用
+监听keypress事件
+String.fromCharCode（number）通过ascall码获取字符
+/\d/ 匹配一个数字正则
+test检测字符是否匹配
+charCode 返回onkeypress事件触发键值的字母代码。 
+keyCode 返回 onkeydown 或 onkeyup 事件的键的代码
+数字1-9的code：49-57
+charcode > 9 ？
+e.ctrlKey ctrl键是否按下
+e.preventDefault()阻止默认事件发生
+input的change事件，
+在函数中有传递参数时函数获取的是传入的参数，
+在函数中不传入参数时，函数获取的是event
+ 
+ 
+ 
+ 
+ 
+ 
+cookie与编码
+2019年6月26日
+10:50
+ 
+export function getCookie(name){
+var arr,reg=new RegExp("(^|)"+name+"=([^;]*)(;|$)");
+if(arr=document.cookie.match(reg))
+return (arr[2]);
+else 
+return null;
+}
+获取cookie要使用unescape()解码
+export function setCookie(c_name,value,expiredays){
+var expdate = new Date();
+if (window.navigator.userAgent.indexOf('Chrome') !== -1) {//chrome有时差8个时区
+expiredays = expiredays + 1/3;
+}
+expdate.setDate(expdate.getDate()+expiredays);
+document.cookie=c_name+"="+escape(value)+((expiredays==null)?"":";expires="+expdate.toGMTString());
+//document.cookie =" name = secape(value) ;expires = expdate"
+}
+设置cookie的value要使用escape()加密
+export function delCookie(name){
+var exp = new Date();
+exp.setTime(exp.getTime() - 1);
+var cval=getCookie(name);
+if(cval!=null) 
+document.cookie= name + "="+cval+";expires="+exp.toGMTString();
+}
+ 
+cookie要使用unescape() 函数解码使用 escape() 编码
+获取：document.cookie.match(reg)   this.arr = JSON.parse(unescape(getCookie(key))) || []
+设置：document.cookie = 'name =escape(value);sxpires = time'
+删除：document.cookie = 'name =escape(value);sxpires = time-1'
+ 
+ 
+cookie
+设置发送过程：
+客户端发送一个http请求到服务器端 服务器端发送一个http响应到客户端，其中包含Set-Cookie头部 客户端发送一个http请求到服务器端，其中包含Cookie头部 服务器端发送一个http响应到客户端
+客户端 （request header）-> 服务器 （response header）- > 客户端
+会话跟踪
+查看网站cookie 控制台 javascript:alert (document. cookie)
+ 
+中文属于Unicode字符，在内存中占4个字符，而英文属于ASCII字符，内存中只占2个字节。
+Cookie中使用Unicode字符时需要对Unicode字符进行编码，否则会乱码。
+如果值为二进制数据，则需要使用BASE64编码
+ 
+ 
+url 编码
+ 
+   foo://example.com:8042/over/there?name=ferret#nose  
+   \_/  \______________/ \________/\_________/ \__/ 
+     |                            |              |              |            | 
+scheme     authority         path   query      fragment
+ 
+为什么需要Url编码：
+通常如果一样东西需要编码，说明这样东西并不适合传输。原因多种多样，
+1、如Size过大，包含隐私数据，对于Url来说，之所以要进行编码，是因为Url中有些字符会引起歧义,将引起歧义的&和= 符号进行转义，也就是对其进行编码
+2、Url的编码格式采用的是ASCII码，而不是Unicode，这也就是说你不能在Url中包含任何非ASCII字符，例如中文。否则如果客户端浏览器和服务端浏览器支持的字符集不同的情况下，中文可能会造成问题。
+哪些需要编码：
+Url编码的原则就是使用安全的字符（没有特殊用途或者特殊意义的可打印字符）去表示那些不安全的字符。
+Url中只允许包含英文字母（a-zA-Z）、数字（0-9）、-_.~4个特殊字符以及所有保留字符，其他字符均需要经过编码之后才能出现在Url中
+普通数据包含特殊字符时，需要对其进行编码，百分号本身用作对不安全字符进行编码时使用的特殊字符，因此本身需要编码
+合法字符，编码和不编码是等价的
+歧义字符需要编码；
+如何编码：
+Url编码通常也被称为百分号编码
+js编码解码函数escape / unescape,encodeURI / decodeURI和encodeURIComponent / decodeURIComponent
+安全字符不同，兼容性不同，对Unicode编码不同，使用场合不同，
+encodeURI被用作对一个完整的URI进行编码，而encodeURIComponent被用作对URI的一个组件进行编码

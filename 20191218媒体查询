@@ -1,0 +1,76 @@
+响应式设计：媒体查询
+定义语法：
+媒体类型:<style media="screen"></style>
+媒体属性:需要用括号包起来,媒体属性会被解析成真或假
+@media(){}媒体属性带有“min-”和“max-”前缀，用于表达“小于等于”和“大于等于”
+检测颜色的位数（color）
+颜色索引（color-index）
+检测浏览器可视宽度和高度的比例（aspect-ratio）
+检测设备的宽度和高度的比例（device-aspect-ratio）
+设备高度（device-height）
+设备宽度（device-width）
+网格（grid）
+浏览器可视高度（height）
+浏览器可视宽度（width）
+黑白（monochrome）不是黑白设备，值为0
+检测设备目前处于横向还是纵向状态（orientation）值：landscape(横屏) | portrait(竖屏)
+分辨率（resolution）
+扫描（scan）
+当媒体查询为真时，相关的样式表或样式规则就会按照正常的级联规则被应用。即使媒体查询返回假， <link> 标签上带有媒体查询的样式表仍将被下载（只不过不会被应用）
+根据媒体查询应用对应的样式文件：<link rel="stylesheet" href="style.css" media="print"> screen、tv、print、all
+根据媒体查询应用对应的样式规则：@media(min-device-width: 1000px)){{div{background:red}}}
+使用操作符构建复杂媒体查询 not and only 逗号（or）
+在不使用not或only操作符的情况下，媒体类型是可选的，默认为all
+@media screen and (min-width:800px) {...}
+@media (min-width: 700px) and (orientation: landscape) { ... } //满足横屏以及最小宽度为700px的条件应用样式表
+@media (min-width: 700px), handheld and (orientation: landscape) { ... } //满足最小宽度为700像素或是横屏的手持设备应用样式表
+not关键字对一整条媒体查询的结果进行取反，仅能应用于整个查询，而不能单独应用于一个独立的查询
+only操作符表示仅在媒体查询匹配成功时应用指定样式。可以通过它让选中的样式在老式浏览器中不被应用
+media="only screen and (max-width:1000px)"{...}
+api方法：
+window.matchMedia()方法用来检查CSS的mediaQuery语句,
+入参：媒体查询语句var mql = window.matchMedia("(min-width: 1000px)")
+返回值MediaQueryList对象：
+MediaQueryList对象的两个属性
+media返回查询的mediaQuery语句字符串；matches当前环境是否匹配到查询语句
+MediaQueryList对象的两个方法
+addListener绑定监听回调函数mql.addListener(cb(mql))
+removeListener解除绑定
+
+媒体属性使用相对单位问题：
+rem在html内部是相对于html的font-size
+但媒体查询级别高与html，内部的相对单位是相对于浏览器而言，浏览器默认font-size：16px；所以媒体查询不要使用rem，可以考虑em，如media="only screen and (max-width:1em)"
+
+响应式网页设计：
+1初始化设置，在html文件head内
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+name="viewport"：标记显示设备为视口；
+width = device-width：宽度等于当前设备的宽度；
+initial-scale：初始的缩放比例（默认设置为1.0）；
+minimum-scale：允许用户缩放到的最小比例（默认设置为1.0）；
+maximum-scale：允许用户缩放到的最大比例（默认设置为1.0）；   
+user-scalable：用户是否可以手动缩放（默认设置为no，因为我们不希望用户放大缩小页面）
+2解决IE浏览器的兼容性问题
+IE浏览器(IE8)不支持HTML5和CSS3中的media，所以要加载用于解决IE浏览器兼容性问题的JS文件
+<!--[if lt IE 9]>
+<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+<script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+<![endif]-->
+3设置IE的渲染方式为最高，解决浏览器的文档模式版本低于浏览器版本问题
+<meta http-equiv="X-UA-Compatible"content="IE=Edge，chrome=1">
+4书写媒体查询语句和媒体查询代码组合
+@media screen and (max-width:960px){
+	body{background:red;}
+}
+@media screen and (min-width:960px) and(max-width:1200px){
+　　body{background:yellow;}
+}
+5总结：
+判断网页在不同设备中所处的宽度范围（PC、平板、中大屏手机、小屏手机...）
+为各种宽度范围情况下的所需页面元素套用不同的CSS样式，从而适配各种设备
+宽度最大值:设置响应式网页宽度的最大值，忽略最大值出现臃肿或零散等视觉洪灾；
+宽度：大于或等于960px的PC端（1920px、1600px、1440px、1280px、1140px、960px）、960px至640px之间的平板端（768px、640px）以及640px以下的手机端（480px、320px）
+window.onresize = function (){}
+width1 = window.screen.width
+width2 = document.documentElement.clientWidth
+

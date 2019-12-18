@@ -1,0 +1,166 @@
+//文件上传html定义
+<input ref="importFile" type="file" class="" multiple @change="fileChange">
+
+//点选文件，保存
+	    fileChange(e) { 
+                let fileInput = this.$refs.paramFile;
+                // console.log(fileInput.value)//文件路径C:\fakepath\Metric.xlsx
+		// console.log(fileInput.files[0].name)//文件名称
+                if (fileInput.value) {
+                    this.paramFile = fileInput.files[0]//单个文件
+		    this.fileList = Object.values(fileInput.files)//多个文件
+                } else {
+                    this.paramFile = null
+                }
+            },
+//文件上传，直接上传文件 file
+
+    let formData = new FormData();
+    formData.append('file',file)//单文件
+    return AXIOS.post(path,formData)
+
+
+//文件上传，通过字节数组
+
+                    let reader=new FileReader()
+                    reader.readAsArrayBuffer(file);//读取文件
+                    reader.onload = function(e) {//读完文件的回调e.target.result
+                        let buf = new Uint8Array(reader.result);
+                        let arr=[]
+                        for (let i in buf) {
+                            arr.push(buf[i])
+                        }
+                        //arr文件流
+                        _this.paramArchiveForm={
+                            attachfileName:file.name,
+                            attachfileArray:arr,
+                        }
+
+                    }
+
+//文件下载1使用window.open 2使用a标签的href和download属性
+get请求获取到文件流：
+window.open(path)
+post请求获取到文件流：
+
+必须提前设定文件名称、文件类型
+	const content = response.data
+        const blob = new Blob([content])
+        const fileName = '导出信息.xlsx'
+        if ('download' in document.createElement('a')) { // 非IE下载
+          const elink = document.createElement('a')
+          elink.download = fileName
+          elink.style.display = 'none'
+          elink.href = URL.createObjectURL(blob)
+          document.body.appendChild(elink)
+          elink.click()
+          URL.revokeObjectURL(elink.href) // 释放URL 对象
+          document.body.removeChild(elink)
+        } else { // IE10+下载
+          navigator.msSaveBlob(blob, fileName)
+
+下载本地文件（跟目录/static/file/file.xml)
+0、window.open(location.origin+'/static/file/template.xml')  //直接在浏览器打开文件
+1、<a :href="templateUrl" download="template.xml">文件下载</a>	templateUrl:location.origin + '/static/file/template.xml',
+2、<el-button @click="downLoadTemplate" size="mini" class="el-icon-document right" type="text">文件下载</el-button>
+downLoadTemplate(){
+    AXIOS.get(location.origin + '/static/file/template.xml').then(r => {
+                const blob = new Blob([r.data])
+                const fileName = "template.xml"
+                if ('download' in document.createElement('a')) { // 非IE下载
+                    const elink = document.createElement('a')
+                    elink.download = fileName
+                    elink.style.display = 'none'
+                    elink.href = URL.createObjectURL(blob)
+                    document.body.appendChild(elink)
+                    elink.click()
+                    URL.revokeObjectURL(elink.href) // 释放URL 对象
+                    document.body.removeChild(elink)
+                } else { // IE10+下载
+                    navigator.msSaveBlob(blob, fileName)
+                }
+    })
+}
+
+
+
+
+
+
+
+
+
+文件内容读取：
+<input type="file" ref="archiveFile" name="" id="" @change="changeArchiveFile">
+
+            changeArchiveFile(){
+                let _this=this
+                let fileInput=this.$refs.archiveFile;
+                if(fileInput.value){
+                    let file=fileInput.files[0]
+                    let reader=new FileReader()
+                    reader.readAsArrayBuffer(file);//读取文件
+                    reader.onload = function(e) {//读完文件的回调e.target.result
+                        let buf = new Uint8Array(reader.result);
+                        let arr=[]
+                        for (let i in buf) {
+                            arr.push(buf[i])
+                        }
+                        _this.paramArchiveForm={..._this.paramArchiveForm,
+                            attachfileName:file.name,
+                            attachfileUrl:arr,
+                        }
+                    }
+                }else{
+                    this.paramArchiveForm={..._this.paramArchiveForm,
+                        attachfileName:'',
+                        attachfileUrl:[],
+                    }
+                }
+            },
+
+
+读取文件为字节数组
+changeArchiveFile（）{}
+filePath = this.$ref.inputFile.value;//不是真实路径 C:\fakepath\Metric.xlsx
+file = this.$ref.inputFile.files[0];
+reader = new FileReader()
+reader.readerAsArrayBuffer(file)
+reader.onload = function (e){ 
+	let buf = new Uint8Array(reader.result);
+	let arr = [];
+	for(let i in buf ){
+		arr.push(buf[i])
+	}
+}
+
+
+导出excel
+
+  import FileSaver from "file-saver";
+  import XLSX from "xlsx";
+
+      exportExcel() {//导出table为excel
+        /* 从表生成工作簿对象 */
+        let table = document.querySelector("#exportTable").cloneNode(true);
+        //element-ui的表格的fixed属性导致多出一个table，会下载重复内容，这里删除掉
+        table.removeChild(table.querySelector(".el-table__fixed-right"))
+        let wb = XLSX.utils.table_to_book(table,{raw:true});
+        /* 获取二进制字符串作为输出 */
+        var wbout = XLSX.write(wb, {
+          bookType: "xlsx",
+          bookSST: true,
+          type: "array"
+        });
+        try {
+          FileSaver.saveAs(
+            new Blob([wbout], { type: "application/octet-stream" }),
+            //设置导出文件名称
+            `versionList.xlsx`
+          );
+        } catch (e) {
+          if (typeof console !== "undefined") console.log(e, wbout);
+        }
+        return wbout;
+      },
+

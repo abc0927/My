@@ -1,0 +1,54 @@
+浏览器对标签的默认属性解析不同
+ Can I use
+css：
+1 标签margin和padding不同
+*{}
+2 图片之间有间距
+使用float或者设置font-size:0
+3 最小高度min-height不兼容问题
+min-height:20px;height:20px;height:auto !important;overflow:visible;
+4透明度（ie8以下）
+opacity: 0.5;filter: alpha(opacity = 50);filter: progid:DXImageTransform.Microsoft.Alpha(style = 0, opacity = 50);
+5盒模型width计算方法（ie6）
+使用box-sizing:content-box;
+6清除浮动（ie67） *zoom：1
+
+
+js：
+1事件的event对象
+event = event || window.event
+target = event.srcElement || event.target
+2事件绑定
+ie：dom.attachEvent()
+其他:dom.addEventListener()
+阻止事件冒泡event.stopPropagation?event.stopPropagation():event.cancelBubble=true
+阻止事件默认event.preventDefault?Event.preventDefault():event.returnValue=false
+3ajax请求
+ie：ActiveXObject
+其他：xmlHttpRequest
+4相关bom，ie不支持document.documentElement
+var w=document.documentElement.clientwidth||document.body.clientwidth
+滚动条：document.body.scrollTop || document.documentElement.scrollTop
+5获取节点样式与内容
+ie：css = el.currentStyle 其他：css = window.getComputedStyle(el,null)
+text =  el.textContent ||el.innerText
+6获取dom子节点childNodes，建议使用children
+first = el.firstElementChild || el.firstChild
+7创建节点,元素没有子节点，ie低版本读取不到，而标准浏览器会把文本节点当做子节点
+if(el.children[0]){el.insertBefore()}else{el.appendChild()}
+8解决css3的兼容性，添加前缀
+chrome：-webkit-(国内浏览器都是这个)
+firefox: -moz-
+ie: -ms-
+poera: -o-
+
+
+插件：
+PostCSS，处理属性的前缀问题
+Polyfill，处理浏览器对js实现差异问题
+
+
+浏览器检测：
+window.navigator
+var userAg = window.navigator.userAgent
+if(userAg.indexOf("Chrome")>-1){当前浏览器为chrome}//Firefox/Opera/Trident/Edge/Safari

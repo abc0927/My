@@ -1,0 +1,277 @@
+Blob对象：
+
+Blob对象可以看作是存放二进制数据的容器，此外还可以通过blob设置二进制数据的MIME类型
+一个 Blob对象表示一个不可变的, 原始数据的类似文件对象属性：size、type方法：clice、close
+
+var blob = new Blob(dataArr:Array<any>,opt:{type:string});
+dataArr：数组，包含了要添加到blob对象中的数据，数据可以是任意多个ArrayBuffer，ArrayBufferView，blob或者DOMString对象
+opt：对象，用于设置Blob对象的属性（如MIME类型）
+从Blob中读取内容的唯一方法是使用 FileReader
+var reader = new FileReader()
+reader.addEventListener("loadend",function(result){
+	console.log(result.target.result)
+}
+reader.readerAsArrayBuffer(blob)
+
+
+
+URL.createObjectURL() 与 URL.revokeObjectURL()介绍
+
+objectURL = URL.createObjectURL(object);
+参数object 是用于创建 URL 的 File 对象、Blob 对象或者 MediaSource 对象。​
+返回一个可以引用到指定对象的DOMString,其中包含一个表示参数中给出的对象的URL，这个新的URL对象表示指定的 File 对象或 Blob 对象。相当于这个方法创建一个传入对象的内存引用地址
+URL.revokeObjectURL(objectURL); 静态方法用来释放一个之前已经存在的、通过调用 URL.createObjectURL() 创建的 URL 对象。当你结束使用某个 URL 对象之后，应该通过调用这个方法来让浏览器知道不用在内存中继续保留对这个文件的引用了。
+file 对象只是 blob 对象的一个更具体的版本，blob 存储着大量的二进制数据，并且 blob 的 size 和 type 属性，都会被 file 对象所继承，blob 对象和 file 对象可以用在同一个地方，例如，可以使用 FileReader 借口从 blob 读取数据，也可以使用 URL.createObjectURL() 从 blob 创建一个新的 URL 对象，一个file对象可以看做是一个blob对象
+所以可以：
+URL.createObjectURL(file)//创建文件对象的引用地址
+URL.createObjectURL(blob)
+reader.readerAsArrayBuffer(file)//读取文件对象
+reader.readerAsArrayBuffer(blob)
+
+
+var blob = new Blob(['hello world'], { type: "text/plain" })
+
+//blob转换为字节数组
+var reader = new FileReader()
+reader.addEventListener("loadend", function (result) {
+    let buf = new Uint8Array(result.target.result); // 输出字节数组buf = new Int8Array(result.target.result);
+
+});
+reader.readAsArrayBuffer(blob);//读出为arrayBuffer
+
+var reader = new FileReader()
+reader.addEventListener("loadend", function (result) {//reader.onload = function(result){}
+    let bytes = window.atob(result.target.result.substr(-16)) //解码base64；str.slice(beginIndex[, endIndex])；str.substr(start, [length])
+    let n = bytes.length
+    // let u8arr = new Uint8Array(n)
+    let u8arr = []
+    while (n--) {
+        u8arr[n] = bytes.charCodeAt(n);   //将编码转换成Unicode编码数组输出
+    }
+});
+reader.readAsDataURL(blob);//读出为base64
+
+
+// blob转换为文件下载
+var elink = document.createElement('a')
+elink.download = 'test.txt'
+elink.style.display = 'none'
+elink.href = URL.createObjectURL(blob)//blob对象对应的URI，创建一个传入对象的内存引用地址
+// blob:https://developer.mozilla.org/13780651-a596-45d6-a1fe-8b8488058202
+document.body.appendChild(elink)
+elink.click()
+URL.revokeObjectURL(elink.href) // 释放URL 对象
+document.body.removeChild(elink)
+
+//file转为图片显示
+// 由于File对象继承自Blob,所以我们可以很方便的利用File对象加载本地系统图片文件，并通过createObjectURL生成一个URL并加以显示
+var img = document.createElement("img");
+img.src = window.URL.createObjectURL(files[i]);
+img.height = 60;
+img.width = 60;
+img.onload = function () {
+    window.URL.revokeObjectURL(this.src);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+//文件上传html定义
+<input ref="importFile" type="file" class="" multiple @change="fileChange">
+
+//点选文件，保存
+	    fileChange(e) { 
+                let fileInput = this.$refs.paramFile;
+                // console.log(fileInput.value)//文件路径C:\fakepath\Metric.xlsx
+		// console.log(fileInput.files[0].name)//文件名称
+                if (fileInput.value) {
+                    this.paramFile = fileInput.files[0]//单个文件
+		    this.fileList = Object.values(fileInput.files)//多个文件
+                } else {
+                    this.paramFile = null
+                }
+            },
+//文件上传，直接上传文件 file
+
+    let formData = new FormData();
+    formData.append('file',file)//单文件
+    return AXIOS.post(path,formData)
+
+
+//文件上传，通过字节数组
+
+                    let reader=new FileReader()
+                    reader.readAsArrayBuffer(file);//读取文件
+                    reader.onload = function(e) {//读完文件的回调e.target.result
+                        let buf = new Uint8Array(reader.result);
+                        let arr=[]
+                        for (let i in buf) {
+                            arr.push(buf[i])
+                        }
+                        //arr文件流
+                        _this.paramArchiveForm={
+                            attachfileName:file.name,
+                            attachfileArray:arr,
+                        }
+
+                    }
+
+//文件下载1使用window.open 2使用a标签的href和download属性
+get请求获取到文件流：
+window.open(path)
+post请求获取到文件流：
+
+必须提前设定文件名称、文件类型
+	const content = response.data
+        const blob = new Blob([content])
+        const fileName = '导出信息.xlsx'
+        if ('download' in document.createElement('a')) { // 非IE下载
+          const elink = document.createElement('a')
+          elink.download = fileName
+          elink.style.display = 'none'
+          elink.href = URL.createObjectURL(blob)
+          document.body.appendChild(elink)
+          elink.click()
+          URL.revokeObjectURL(elink.href) // 释放URL 对象
+          document.body.removeChild(elink)
+        } else { // IE10+下载
+          navigator.msSaveBlob(blob, fileName)
+
+下载本地文件（跟目录/static/file/file.xml)
+0、window.open(location.origin+'/static/file/template.xml')  //直接在浏览器打开文件
+1、<a :href="templateUrl" download="template.xml">文件下载</a>	templateUrl:location.origin + '/static/file/template.xml',
+2、<el-button @click="downLoadTemplate" size="mini" class="el-icon-document right" type="text">文件下载</el-button>
+downLoadTemplate(){
+    AXIOS.get(location.origin + '/static/file/template.xml').then(r => {
+                const blob = new Blob([r.data])
+                const fileName = "template.xml"
+                if ('download' in document.createElement('a')) { // 非IE下载
+                    const elink = document.createElement('a')
+                    elink.download = fileName
+                    elink.style.display = 'none'
+                    elink.href = URL.createObjectURL(blob)
+                    document.body.appendChild(elink)
+                    elink.click()
+                    URL.revokeObjectURL(elink.href) // 释放URL 对象
+                    document.body.removeChild(elink)
+                } else { // IE10+下载
+                    navigator.msSaveBlob(blob, fileName)
+                }
+    })
+}
+
+
+
+
+
+
+
+
+
+文件内容读取：
+<input type="file" ref="archiveFile" name="" id="" @change="changeArchiveFile">
+
+            changeArchiveFile(){
+                let _this=this
+                let fileInput=this.$refs.archiveFile;
+                if(fileInput.value){
+                    let file=fileInput.files[0]
+                    let reader=new FileReader()
+                    reader.readAsArrayBuffer(file);//读取文件
+                    reader.onload = function(e) {//读完文件的回调e.target.result
+                        let buf = new Uint8Array(reader.result);
+                        let arr=[]
+                        for (let i in buf) {
+                            arr.push(buf[i])
+                        }
+                        _this.paramArchiveForm={..._this.paramArchiveForm,
+                            attachfileName:file.name,
+                            attachfileUrl:arr,
+                        }
+                    }
+                }else{
+                    this.paramArchiveForm={..._this.paramArchiveForm,
+                        attachfileName:'',
+                        attachfileUrl:[],
+                    }
+                }
+            },
+
+
+读取文件为字节数组
+changeArchiveFile（）{}
+filePath = this.$ref.inputFile.value;//不是真实路径 C:\fakepath\Metric.xlsx
+file = this.$ref.inputFile.files[0];
+reader = new FileReader()
+reader.readerAsArrayBuffer(file)
+reader.onload = function (e){ 
+	let buf = new Uint8Array(reader.result);
+	let arr = [];
+	for(let i in buf ){
+		arr.push(buf[i])
+	}
+}
+
+
+导出excel
+
+  import FileSaver from "file-saver";
+  import XLSX from "xlsx";
+
+      exportExcel() {//导出table为excel
+        /* 从表生成工作簿对象 */
+        let table = document.querySelector("#exportTable").cloneNode(true);
+        //element-ui的表格的fixed属性导致多出一个table，会下载重复内容，这里删除掉
+        table.removeChild(table.querySelector(".el-table__fixed-right"))
+        let wb = XLSX.utils.table_to_book(table,{raw:true});
+        /* 获取二进制字符串作为输出 */
+        var wbout = XLSX.write(wb, {
+          bookType: "xlsx",
+          bookSST: true,
+          type: "array"
+        });
+        try {
+          FileSaver.saveAs(
+            new Blob([wbout], { type: "application/octet-stream" }),
+            //设置导出文件名称
+            `versionList.xlsx`
+          );
+        } catch (e) {
+          if (typeof console !== "undefined") console.log(e, wbout);
+        }
+        return wbout;
+      },
+
+
+
+ArrayBuffer对象代表储存二进制数据的一段内存，不能直接读写，只能通过视图（TypedArray视图和DataView视图）来读写，视图的作用是以指定格式解读二进制数据；
+
+const buf = new ArrayBuffer(32) //构造函数的参数是所需要内存大写
+//上面代码生成了一段32字节的内存区域，每个字节的值默认是0，为了读写这段内存，需要为他指定视图
+
+const dataView = new DataView(buf)//建立视图
+const uint = new Uint8Array(buf)//建立视图
+const int = new Int32Array(buf)//建立视图
+//同一段内存建立的多种视图，一个视图修改底层内存会影响到其他视图；
+TypedArray视图的构造函数除了接受ArrayBuffer实例作为参数，还可以接受普通数组作为参数，直接分配内存生成底层的ArrayBuffer实例，并同时完成对这段内存的赋值；
+const typeArray = new Uint8Array([0,1,2])
+
+同一段内存，不同数据有不同的解读方式，这就叫做视图
+9种同一数据类型的TypeArray视图，1种不同数据类型的DataView视图
+视图本身不储存数据，他的数据都储存在底层的ArrayBuffer对象之中，要获取底层对象必须使用buffer属性
+
+TypedArray(buffer, byteOffset=0, length?)
+
+
+
+
+
+

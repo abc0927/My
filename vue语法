@@ -1,0 +1,264 @@
+v-loading="loading"
+v-for
+v-for="(item ,index) in items" 	数组
+v-for="(value, key, index) in object"	对象
+	object:{ name:'name1',k:'k1'} 
+	value:name1;key:name;index:0;
+	value:k1;key:k;index:1
+把对象每个键值对看做数组元素
+
+v-on绑定事件
+事件
+vue只是一个JS框架，@这种写法只是提供绑定事件方式，没有改变原生的JS事件，所以所有的原生JS事件都是支持的，查看dom支持的事件，打印这个dom就可以
+鼠标事件@click@dblclick@mouseover@mouseleave@mouseenter
+键盘事件@keyup.enter="submit"@keypress@keydown
+表单事件@focus@blur@change@select
+
+修饰符
+表单修饰符
+<input type="text" v-model.lazy="value">
+<input type="text" v-model.trim="value">
+.number
+
+事件修饰符.stop.prevent.self.once.capture.passive.native
+鼠标按钮修饰符@click.right left middle
+按键修饰符
+@click.ctrl.exact="onCtrlClick" 有且只有 Ctrl 被按下的时候才触发
+@keyup.keyCode="shout(4)"
+@keyup.ctrl="shout(4)"Vue.config.keyCodes.f1 = 112
+//普通键.enter .tab.delete //(捕获“删除”和“退格”键).space.esc.up.down.left.right
+//系统修饰键.ctrl.alt.meta.shift
+
+v-bind绑定变量
+
+
+v-model
+v-model="varName"等价于:value="varName" @input="e => varName = e.target.value"。
+在input上使用
+<input v-model="sth" />
+<input :value="sth" @input="sth = $event.target.value" />
+在给<input />元素添加v-model属性时，默认会把value作为元素的属性，然后把'input'事件作为实时传递value的触发事件
+v-mode
+在其他组件上使用
+index.vue
+<currency-input v-model="price"></currentcy-input>
+currencyinput.vue 
+<el-input v-model="inputvalue" @input="inputchange"></el-input>
+inputchange(val){
+      this.$emit('input',val)// 触发父组件v-model默认绑定的input事件
+}
+（默认把value作为元素的属性inputvalue，注册input事件作为实时传递value的触发事件inputchange）
+通过触发父组件的input事件使父组件v-model绑定值更新
+
+props: {
+    // value: String,//父组件的v-model
+
+this.$emit("input", arr[1]);//更新父组件的v-model
+
+
+属性绑定：对象语法与数组语法
+<div :class="{'d1':true,'d2':isd2}"></div>
+<div :class="['d1',{'d2':isd2}]"></div>
+:style="{height: heightData}"
+:style="[styleObjA,styleObjB]"
+:style在运行时自动进行浏览器厂商前缀探测
+
+动态绑定
+属性true和false的赋值，必须使用v-bind :inline="true"
+传递Number	:context="10" 
+传递字符	context="10"
+
+样式
+<style scope>中的样式
+1仅作用于当前组件
+2仅对自定义元素有效
+3对内部的引用组件整体有效，组件内部无效
+如对dialog整体有效但对dialog的header或body无效
+需要在外面使用单独的style去设置dialog的header和body样式
+<style>中的样式
+1不仅对当前组件有效，而且会作用在其他组件
+如何对组件内部引用组件设置单独的样式：
+如对某组件内的collapse组件设置header但不让作用于其他组件
+1在style中添加
+2给父级元素添加类名限制
+如：.mark .el-collapse-item_header{}只会作用到mark下面的引用组件header元素
+
+Data
+使用函数返回
+Data(){return {} }
+只定义数据类型：testcontext:Number,
+引用store数据：
+1有单独引入store时，使用store.state.key
+2没有单独引入store，主入口有引入并注册的；使用 this.$store.state.key
+
+
+Watch
+监听
+深度监听对象内部的属性
+1使用deep:true 深度监听
+2使用computed做中间层，然后浅监听
+watch: {
+      obj:{
+          handler(newval,oldval){
+              console.log(newval)
+          },
+          deep:true,//深度监听，给每个属性都加上监听器；
+	    immediate: true//首次绑定就执行
+      },
+      'obj.name':{//字符串的形式监听对象具体属性
+          handler(newval,oldval){
+              console.log(newval)
+          },
+      }
+}
+watch需要额外参数设置，监听数据后面写成对象形式，使用handler处理
+数组的变化不需要通过深度监听，对象数组中对象的属性变化则需要deep深度监听
+如果监听对象内的某一具体属性，可以使用字符串的形式监听对象具体属性
+如果监听对象内的某一具体属性，可以通过computed做中间层来实现
+computed: {
+    channel() {
+        return this.msg.channel
+    }
+},
+watch:{
+    channel(newValue, oldValue) {
+        console.log(newValue)
+    }
+}
+
+
+组件模板
+字符串、模板字面量、x-template、内联模板、render 函数、JSF、单文件组件(首选)
+
+定义在template中的模板
+Vue.component('com-name',{
+    template:`<div></div>`,
+    data(){},
+    methods:{}
+})
+
+//定义在script中的模板
+<script type="text/x-template" id="com-template">
+    <div></div>
+</script>
+通过id使用
+Vue.component('com-name',{
+    template:'#com-template',
+    data(){},
+    methods:{}
+})
+
+
+//组件内联模板 ,使用标签内定义 inline-template
+<com-template inline-template>
+    <div></div>
+</com-template>
+Vue.component('com-template',{
+    data(){},
+    methods:{}
+})
+
+
+Computed property "route" was assigned to but it has no setter
+
+一个计算属性，如果没有设置 setter,也就是传入的是一个函数，或者传入的对象里没有 set 属性，当你尝试直接该改变这个这个计算属性的值，比如在methods方法里面有对这个计算属性赋值的操作
+都会报这个错误。
+所以要给计算属性添加空set
+
+组件、路由懒加载、延迟加载、按需加载，提升首屏加载速度
+使用require的异步懒加载和使用import的es懒加载
+
+import懒加载
+component: （）=>import('需要加载的模块地址')
+'com-name':（）=>import('需要加载的模块地址')
+异步懒加载
+component: resolve=>(require(["@/components/HelloWorld"],resolve))
+'com-name':resolve=>(require(["@/components/HelloWorld"],resolve))
+
+
+请用computed去接收state
+语法糖mapState 辅助函数帮助我们生成state的计算属性
+import { mapState } from "vuex";
+
+
+let mapStateO = mapState("layout",
+
+computed:{
+
+
+
+v-bind
+prop传入一个对象的所有属性：
+将一个对象的所有属性都作为prop传入，可以使用不带参数的v-bind=“obj”而不用一个个去绑定传入
+
+<el-input-number v-model="num1" @change="handleChange" :min="1" :max="10" label="描述文字"></el-input>
+
+vue2-ace-editor 代码编辑器语法高亮、
+AceEditor: require("vue2-ace-editor")
+
+<ace-editor
+                    style="height:280px;borderRadius:4px"
+                    v-model="httpForm.payload"
+                    @init="editorInit"
+                    lang="json"
+                    theme="xcode"
+                    :options="{
+                      tabSize: 2,
+                      useSoftTabs: true
+                    }"
+                  ></ace-editor>
+配置options的值配置语法提示
+
+
+
+promptUnsaved: function() {
+      if (this.modifiedFlag) {
+        return this.$confirm("视图尚未保存, 是否离开当前页面?", "提示", {
+          confirmButtonText: "确定",
+          cancelButtonText: "取消",
+          type: "warning"
+        });
+      } else {
+        return Promise.resolve();
+      }
+    },
+
+获取查询字符串
+import queryString from "query-string";
+const query = queryString.parse(location.search);
+替换当前查询字符
+router.replace({
+              query: {
+                ...query,
+                viewId: viewList[0].id
+              }
+ });
+
+instanceOf
+检测构造函数的 prototype 属性是否出现在某个实例对象的原型链上
+object instanceof constructor
+判断一个对象是不是某个类型的实例
+target instanceof Object
+target instanceof Array
+
+
+beforeunload事件在当页面卸载（关闭）或刷新时调用
+
+面板绑定的组件，不区分大小写
+<component :is="panelComponent"></component>
+
+lodash/takeRight
+从后往前获取数组固定个数元素
+arr = takeRight(brr,3)
+
+UI插件
+ant-design-vue
+
+
+
+
+
+
+
+
+

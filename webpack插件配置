@@ -1,0 +1,212 @@
+webpack插件篇：
+loaders是在打包构建过程中用来处理源文件的
+插件并不直接操作单个文件，它直接对整个构建过程其作用
+
+1插件安装 npm install --save-dev html-webpack-plugin
+2插件引入 const HtmlWebpackPlugin=require("html-webpack-plugin")
+3创建插件实例
+   plugins: [
+        new webpack.BannerPlugin('版权所有，翻版必究')
+    ],
+4webpack内置插件直接跳过12步骤
+
+DefinePlugin
+创建全局变量，可以在编译时进行设置，使用该属性来设置全局变量来区分开发环境和正式环境
+new webpack.DefinePlugin({
+                'process.env.NODE_ENV': isDevBuild ? '"development"' : '"production"'
+ }),
+
+
+html-webpack-plugin
+作用：
+1为html文件中引入的外部资源如script、link动态添加每次compile后的hash，防止引用缓存的外部文件问题
+2可以生成创建html入口文件，比如单页面可以生成一个html文件入口，配置N个html-webpack-plugin可以生成N个页面入口
+github上有些关于htmlwebpackplugin的属性介绍
+参数：
+title:生成html文件的标题
+filename:输出html文件名称
+template：html模板文件路径，./为webpack.config.js路径
+inject:生成的js自动插入方式，true(同body)/body（body底部）/head/false
+favicon:给生成的html文件生成一个favicon，值为favicon路径
+minify:对生成的html文件进行压缩
+cache默认是true的，表示内容变化的时候生成一个新的文件
+chunks主要用于多入口文件，当你有多个入口文件，那就回编译后生成多个打包后的文件，那么chunks 就能选择你要使用那些js文件，如果没有指定 chunks 选项，默认会全部引用
+
+在实例中（new htmlWebpackPlugin)可以任意定义别的属性，在html文件中可通过模板引擎进行调用
+比如实例中有data:’hello’;那么在html模板中就可通过<%= htmlWebpackPlugin.options.data %>调用
+
+如果想自定义生成的HTML文件中模块的引用，就是哪些引用哪些不引用，那么可以将inject属性置为false后在手工的在html模板中添加这样的代码：
+（main对应着希望引入的chunk模块名，那么一旦有所指定，别的模块就不会自动的进行引用了） 
+<script type="text/javascript" src="<%= htmlWebpackPlugin.files.chunks.main.entry %>"></script>
+htmlWebpackPlugin.files对象：
+{ publicPath: '',
+  chunks:
+   { main:
+      { size: 1345123,
+        entry: 'bundle.js',
+        hash: '6dbfdc14271a460e6292',
+        css: [Array] } },
+  js: [ 'bundle.js' ],
+  css: [ './style.css' ],
+  manifest: undefined }
+
+
+copy-webpack-plugin
+在webpack中拷贝文件和文件夹，比如模板html中引入的本地js文件，在打包后需要收到复制文件到打包文件夹下面
+from  定义要拷贝的源文件            	from：__dirname+'/src/components'
+to    定义要拷贝到的目标文件夹  	to: __dirname+'/dist'
+toType  file 或者 dir                   可选，默认是文件
+force   强制覆盖前面的插件            	可选，默认是文件
+context                                 可选，默认base   context可用specific  context
+flatten  只拷贝指定的文件               可以用模糊匹配
+ignore  忽略拷贝指定的文件            	可以模糊匹配
+new CopyWebpackPlugin(patterns: Array, options: Object)
+new CopyWebpackPlugin([
+	{
+            from: 'test/test.js',
+            to: 'test'
+        }], 
+	{
+            ignore: [],
+            copyUnmodified: true
+        })
+new copyWebpackPlugin([{//拷贝静态文件
+                from: __dirname + '/static',
+                to: './static'
+}]),
+
+
+extract-text-webpack-plugin
+抽离样式文件到单独的css文件
+三步：
+const ExtractTextPlugin = require('extract-text-webpack-plugin')
+module.rules
+test:/\.css$/,
+use:ExtractTextPlugin.extract(
+	{ fallback:"style-loader",//编译后用什么loader来提取css文件
+	  use:"css-loader",//指需要什么样的loader去编译文件
+	  publicPath:""//用来覆盖项目引用路径,生成该css文件的文件路径
+	})
+plugins
+new ExtractTextPlugin("style.css")
+webpack4后使用mini-css-extract-plugin
+
+
+HotModuleReplacementPlugin：
+webpack插件，热替换HMR，修改组件代码后，自动刷新实时预览修改后的效果（只更新局部的修改），使用webpack-dev-server起动的服务
+1在webpack配置文件中添加HMR插件； new webpack.HotModuleReplacementPlugin()//热加载插件，webpack内部插件不需要安装和引入，直接使用
+2在Webpack Dev Server中添加“hot”参数；
+
+
+DefinePlugin
+创建一个在编译时可以配置的全局常量
+这个插件直接执行文本替换，给定的值必须包含字符串本身内的实际引号：'"production"', 或者使用 JSON.stringify('production')布尔值JSON.stringify(true),
+new webpack.DefinePlugin({
+            "process.env.NODE_ENV": JSON.stringify("production")
+}),
+在编译时解析代码中使用的process.env.NODE_ENV,将被替换成production这个值。
+在webpack编译完代码之后就没有process.env.NODE_ENV这个常量值了
+
+
+ProvidePlugin
+提供全局变量，自动加载模块，而不必到处 import 或 require，直接使用即可,
+new webpack.ProvidePlugin({
+  identifier: ['module1', 'property1'],		相当于// let identifier = require("module1")  
+  $: 'jquery',					
+  jQuery: 'jquery'，
+  api:__dirname + '/src/home/modules/scence.js'	相当于// import * as api from './'
+  api:'api1'//需要使用resolve.alias配置路径别名,键值需要引号;相当于 import * as api from api1
+})
+在代码中就可以直接使用$或者jQuery,而不用引入$('#item'); 
+配置选项键值为第三方库名称或者本地库路径__dirname + '/src/home/modules/scence.js'
+
+ProvidePlugin插件是使用require的方式来导入的，所以库应该以export default导出,模块的 property 用于支持命名导出(named export)，新版不存在此问题？
+命名导出：export {a,b } export function fn(){}  	导入 import {a,b，fn} from '' 	;import * as c from ''
+默认导出：export default a ;默认导出的属性名是default	导入 import a from '' 		;import * as c from ''
+
+解决频繁引入同一个路径的文件：
+1使用resolve.alias这个配置项为文件目录配置一个别名，使我们不用频繁地写一长串的引用路径
+2ProvidePlugin配置
+
+DLLPlugin与DllReferencePlugin
+一般项目所有的依赖库都在打包后的boundle.js中导致文件很大,把第三方依赖库和我们自己编写的代码分开打包，这样做的好处是每次更改我本地代码的文件的时候，webpack只需要打包我项目本身的文件代码，而不会再去编译第三方库，那么第三方库在第一次打包的时候只打包一次，以后只要我们不升级第三方包，那么webpack就不会对这些库去打包，这样的可以快速的提高打包的速度。
+DLLPlugin 它能把第三方库代码分离开，并且每次文件更改的时候，它只会打包该项目自身的代码。所以打包速度会更快
+DLLPlugin 这个插件是在一个额外独立的webpack设置中创建一个只有dll的bundle，也就是说我们在项目根目录下除了有webpack.config.js，还会新建一个webpack.dll.config.js文件。webpack.dll.config.js作用是把所有的第三方库依赖打包到一个bundle的dll文件里面，生成vendor.dll.js文件和vendor-manifest.json文件，vendor.dll.js文件包含所有的第三方库文件，在模板html中手动引入；vendor-manifest.json文件会包含所有库代码的一个索引，在DllReferencePlugin引用；
+DllReferencePlugin 这个插件是在webpack.config.js中使用的，该插件的作用是通过读取vendor-manifest.json文件把刚刚在webpack.dll.config.js中打包生成的vendor.dll.js文件引用到需要的预编译的依赖上来所以第一次要先使用webpack.dll.config.js对第三方库打包，之后只需要运行webpack.config.js打包项目文件就可以了
+抽离依赖库
+把依赖的库，先整体都不作处理地打包出来
+webpack.config.vendor.js
+module.exports = {
+  // 入口文件
+  entry: {
+    // 项目中用到该两个依赖库文件，
+    jquery: ['jquery'],
+    echarts: ['echarts']
+  },
+  entry: {
+    // 项目中用到该依赖库文件,统一打包
+    vendor: ['vue/dist/vue.esm.js', 'vue', 'vuex', 'vue-router', 'vue-resource']
+  },
+  // 输出文件
+  output: {
+    // 文件名称
+    filename: '[name].dll.js', 
+    // 将输出的文件放到dist目录下
+    path: path.resolve(__dirname, 'dist', 'lib'),
+
+    /*
+     存放相关的dll文件的全局变量名称，比如对于jquery来说的话就是 _dll_jquery, 在前面加 _dll是为了防止全局变量冲突。
+    */
+    library: '_dll_[name]'//‘[name]_[hash]’
+  },
+  plugins: [
+    // 使用插件 DllPlugin
+    new webpack.DllPlugin({
+      /*
+       该插件的name属性值需要和 output.library保存一致，该字段值，也就是输出的 manifest.json文件中name字段的值。
+       比如在jquery.manifest文件中有 name: '_dll_jquery'
+      */
+      name: '_dll_[name]',//‘[name]_[hash]’
+      /* 生成manifest文件输出的位置和文件名称 */
+      path: path.resolve(__dirname, 'dist','lib', '[name].manifest.json')//生成的文件vendor.manifest.json在DllReferencePlugin引用，生成的vendor.dll.js在html引用
+    })
+  ]
+};
+
+引用已抽离出的依赖库，
+webpack.config.js
+module.exports = {
+  plugins: [
+    // 告诉webpack使用了哪些第三方库代码
+    new webpack.DllReferencePlugin({
+      // jquery 映射到json文件上去
+      manifest: require('./dist/lib/jquery.manifest.json')
+    }),
+    new webpack.DllReferencePlugin({
+      // echarts 映射到json文件上去
+      manifest: require('./dist/lib/echarts.manifest.json')
+    }),
+    new webpack.DllReferencePlugin({//统一打包只需要一个，分开打包则分开引入
+      context:__dirname,//
+      // echarts 映射到json文件上去
+      manifest: require('./dist/lib/vendor.manifest.json')
+    })
+  ]
+}
+模板html引入
+如果库是分开打包，则html中要引入所有的js
+如果库是一起打包，则html中只要引入一个js
+<script src="./lib/vendor.dll.js"></script>//注意这里的引入路径，开发环境启动的web服务要能找到（开发环境设置服务publicPath:'/dist'，生产环境可以找到这个相对地址）
+<script src="./dist/lib/vendor.dll.js"></script>开发环境不配置publicPath，生产环境使用index_prod.html <script src="./lib/vendor.dll.js"></script>
+<script src="/lib/vendor.dll.js"></script>  访问加载路径是url/lib/vendor.dll.js，开发环境用url/dist可以访问到， 生产环境放到服务上访问的是url/lib,可以，但是本地文件直接打开不行
+
+UglifyJsPlugin压缩js
+if(isProduction) {
+  module.exports.plugins.push(
+    new webpack.optimize.UglifyJsPlugin({sourceMap: true})
+  );
+}
+.concat(isProduction? [
+      new webpack.optimize.UglifyJsPlugin()//压缩js
+]:[] )
+

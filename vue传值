@@ -1,0 +1,464 @@
+
+vuex
+传值三部
+1State:{paramValues:{} }
+2mutations：{
+	changeParamValues(state,val){
+	state.paramValues = val;
+},
+3this.$store.commit('changeParamValues', this.rulesContent);
+4在组件中的data或者computed接受store：count:this.$store.state.count，或者是引入store文件，直接是用store.state,模板中使用 {{ $store.state.count }}
+5在store中的其他位置引用state变量： state.username
+6使用actions的异步更改状态，三步骤：
+  mutations: {
+    add(state, n) {
+      state.count += n
+    }
+  },
+  actions: {
+    incrementAsyncWithValue (context, value) {
+      setTimeout(() => {
+        context.commit('add', value)
+      }, 1000)
+    }
+  },
+this.$store.dispatch('incrementAsyncWithValue', 5)
+
+getters认为是 state 的计算属性，用法和计算属性差不多。
+定义getter：
+  getters: {
+    done(state) {
+      return state.count + 5;
+    },
+  }
+使用getter： this.$store.getters.done
+mutations是操作state的唯一方法，即只有mutations方法能够改变state状态值mutations方法必须是同步方法！
+为了处理异步方法，actions出现了,Action 还是得通过 mutation 方法来修改state
+action中的context是与 store 实例具有相同方法和属性的对象。可以通过context.state和context.getters来获取 state 和 getters。
+vuex中的模块
+vuex
+modules:{
+  layout:layout
+}
+
+获取模块中的状态 this.$store.state.模块名.属性名
+this.$store.state.layout.name
+
+state是被先知道模块的命名空间下，需要命名空间才能访问，但actions/mutations/getters却没有被限制，在默认情况下他们是注册到全局命名空间下的，同根store的访问方法相同；
+模块中actions/mutations/getters获得的默认参数都是局部的，Vuex提供了rootState/rootGetters作为module中的getters的默认参数，提供了content.getters/context.rootState全局默认参数,这些全局参数排在局部参数后面
+例如在layout.js中
+action:{
+	changeName({commit,rootState},val){
+		if(rootState.name == '1'){
+			commit('change_name',val)
+		}
+	}
+}
+getters:{
+	localJobTitle(state,getters,rootState,rootState){
+		return rootGetters.jobTitle
+	}
+}
+			
+
+但是可以给模块加一个namespaced属性，限定在当前模块命名空间
+layout.js
+
+export default {
+  namespaced:true,
+  state,
+  mutations,
+  actions,
+  getters
+}
+则在引用模块中的actions/mutations/getters都需要用到命名空间如
+dispatch("layout/setData")
+getters["layout/name"]
+commit("layout/setName",val)
+
+状态模块在组件中使用mapState, mapGetters, mapActions, mapMutations
+import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
+输出状态模块中的状态
+...方法(模块名,[输出状态元素])//模块名省略则输出根模块
+
+computed: {
+    ...mapState("layout", [
+      "view",
+      "uuid",
+      "viewList",
+      "preview",
+      "modifiedFlag"
+    ]),
+...mapGetters("layout", ["widgets", "focusedWidget"]),
+使用计算属性接状态模块中的state和getter中变量，使用的时候直接this.
+methods: {
+    ...mapActions("layout", [
+      "SaveView",
+      "DeleteView",
+    ]),
+    ...mapMutations("layout", [
+      "ClearViewList",
+      "UpdateView",
+      "BlurWidget",
+    ]),
+使用methods方法接状态模块中的mutations和actions，使用的时候直接this.
+
+
+
+路由：router、route、钩子
+router路由器，为VueRouter的实例，相当于一个全局的路由器对象,含有很多方法及属性this.$router.push
+route路由，当前跳转的路由对象this.$route.query；query传参是针对path的，params传参是针对name的
+
+router是VueRouter的一个对象，通过Vue.use(VueRouter)和new VueRouter()构造函数得到一个router的实例对象，这个对象是一个全局的对象，他包含了所有的路由,及和路由相关的属性和方法
+this.$router.push()				路由跳转
+this.$router.push({path:`/user/${userId}`})	this.$route.params.userId获取参数
+this.$router.push({name:'user',params:{}})	this.$route.params获取参数
+this.$router.push({path:'',query:{}})		this.$route.query获取参数
+this.$router.options.routes			获取全局路由配置
+this.$router.matcher.match('pth')             获取匹配路由  = this.$route
+this.$router.currentRoute                    获取当前路由  = this.$route
+
+route对象表示当前路由信息，每一个路由都会有一个route对象，是一个局部的对象，可以获取对应的name,path,params,query等
+This.$route.path.split('/')
+this.$route.path.includes('app')
+this.$route.query.和this.$route.params.	路由取参，
+query传参是针对path的，params传参是针对name的
+
+
+/ 开头的会被当做根路径，不会一直嵌套之前的路径
+
+动态路由：
+动态路由作为Main的子路由是基于：
+登录之后跳转到Main主页，
+该主页是类似于frame的页面加载框架，内部又含<route-view>
+将动态路由作为Main的子路由,使得其他页面显示到Main框架内
+
+router = new Router({
+routes:[
+{
+    path: "",
+    component: Layout,
+    //redirect: "/",
+    name: "Layout",
+    meta: { title: "数据查询", icon: "product-list" },
+    children: [
+      {
+        path: "equipment",
+        name: "equipment",
+        component: () => import("@/views/query/equipment"),
+        meta: { title: "装备软件版本", icon: "order" }
+      },
+    ],
+}]})
+        {
+            path: '/',//默认路径返回的页面
+            redirect: '/app'
+        },
+        {
+            path: '*',//找不到路径返回的页面
+            component: page404
+        },
+
+监控路由： 
+   watch:{
+      route(newVal){
+        if(newVal.includes('app')){
+          this.isActiveList = [true,false,false]
+        }
+        if(newVal.includes('login')){
+          this.$store.commit('setlogin',false)
+        }
+      }
+    },
+    computed:{
+      route(){
+        return this.$route.path
+      },
+    },
+
+路由参数props
+在路由中定义props,让组件和路由解耦
+1、在path后定义的 /:id 参数存放在route.params中
+2、在path后定义的？articleTitle=“”参数存放在route.query中
+定义路由
+{
+      path: '/article/:id',
+      component: () => import( "../pages/article"),
+      props: (route) => ({
+        id: route.params.itemId,
+        articleTitle: route.query.draft
+      })
+}
+跳转路由到article页面时：
+
+this.$router.push({
+       path: "/article/" + id,
+       query: {
+            articleTitle: "文章1"
+       }
+})
+在article页面组件上接收参数：
+
+props: {
+   id: String,
+   articleTitle: String
+}
+
+
+//单页面多路由
+
+<router-view name="header" />
+<router-view name="left" />
+ <router-view />
+
+
+{
+    path:'',
+    name:"",
+    components:{
+        default:{
+            render:h=><router-view></router-view>
+        },
+        header:header,
+        left:()=>import(""),
+        children:[],
+        props: {
+            default: route => ({
+              viewId: route.query.viewId
+            }),
+            header: route => ({
+              viewId: route.query.viewId,
+            })
+          }
+    }
+}
+
+跟路由：
+new Vue({
+  router,
+  store,
+  render: h => <router-view />,
+  i18n
+}).$mount("#app");
+
+
+
+钩子
+组件钩子：
+beforeCreate、created、beforeMount、mounted、beforeUpdate、updated、beforeDestroy、destoryed
+router.beforeEach((to, from, next)=>{})实际上是new VueRouter().beforeEach
+路由钩子：
+全局&路由独享：beforeEach、beforeResolve（v2.5.0+新增）、afterEach ；beforeEnter（路由独享，直接定义在路由配置上的钩子，用法同beforeEach）
+组件内：beforeRouteEnter、beforeRouteUpdate (2.2 新增)、beforeRouteLeave
+beforeRouteEnter(to,from,next){}
+beforeRouteEnter 不能获取组件实例 this
+
+钩子顺序：
+beforeRouteLeave(to,from,next)--
+beforeEach (to,from,next)--
+beforeEnter(to,from,next)--
+beforeRouteEnter(to,from,next)--
+beforeResolve(to,from,next)--
+afterEach()--
+beforeCreate()--
+created()--
+beforeMounte()--
+mounted();
+beforeRouteEnter - beforeCreate - created
+
+在路由钩子中使用next进行路由跳转：
+next({
+	path: '/registerUaa', // 将跳转的路由path作为参数，登录成功后跳转到该路由
+})
+
+
+传参
+路由跳转传参数a跳到b
+1通过vuex传递
+	a把要跳转的参数传递到store，b去store里拿这个数据
+2通过路由跳转传参实现
+	a组件
+	sendParams () {
+        this.$router.push({
+            path: 'yourPath', 
+            name: '要跳转的路径的 name,在 router 文件夹下的 index.js 文件内找',
+            params: { 
+                name: 'name', 
+                dataObj: this.msg
+            }
+            /*query: {
+                name: 'name', 
+                dataObj: this.msg
+            }*/
+        })
+      }
+	
+	b组件
+	 methods: {
+      getParams () {
+        // 取到路由带过来的参数 
+        let routerParams = this.$route.params.dataobj
+        // 将数据放在当前组件的数据内
+        this.msg = routerParams
+      }
+    },
+    watch: {
+    // 监测路由变化,只要变化了就调用获取路由参数方法将数据存储本组件即可
+      '$route': 'getParams'
+    }
+	router传参
+	传递
+	this.$router.push({
+	  path: "/00",
+	  query: {
+	     ateName:transferProject.ateName,
+	  }
+	})
+	接收
+	最好在created中接受
+	mounted(){
+	var getQuery  = this.$route.query;
+	this.ate_Name = getQuery.ateName.trim();
+	}
+	@mouseenter="enter" @mouseleave="leave"
+	钩子函数
+	beforeCreate 都拿不到
+	created  拿得到this.$data和data数据，拿不到this.$el
+	其余钩子都能到所有数据
+	
+	
+	通信
+	组件传参：
+	访问父组件传递的参数 或方法
+	this.$parent.$refs.tree_pro.level
+	使用this.$parent. 同进入父组件的this
+	可以访问到父组件自定义的所有data数据及methods方法等
+	$children是数组
+	子组件触发父组件clickHref事件
+	this.$emit("clickHref", this.current_navs_index.join("")); 
+	父子组件通信：
+	子组件使用props接收，数据类型：数组，对象（值类型，数据验证，默认值）
+	父组件在组件应用位置传入
+	vue中数字、数组、布尔、对象数据类型被看成是表达式，传值需要bind绑定
+	
+	子组件通过emit触发父组件事件：
+	this.$emit('change',val)
+	父组件调用函数使用自己的参数及子组件传递的参数：arguments
+	<father @change="change(item,arguments)"
+	change(fatherVal,childVal){
+		let val1 = fatherVal;
+		let val2 = childVal[0]
+	}
+	
+	
+	props:['a','b']
+	props: {
+	  title: String,
+	  likes: Number,
+	  isPublished: Boolean,
+	  commentIds: Array,
+	  author: Object,
+	}
+	  props: {
+	    // 基础的类型检查 (`null` 和 `undefined` 会通过任何类型验证)
+	    propA: Number,
+	    propB: [String, Number],
+	    // 必填的字符串
+	    propC: {
+	      type: String,
+	      required: true
+	    },
+	    // 带有默认值的数字
+	    propD: {
+	      type: Number,
+	      default: 100
+	    },
+	    // 带有默认值的对象
+	    propE: {
+	      type: Object,
+	      // 对象或数组默认值必须从一个工厂函数获取
+	      default: function () {
+	        return { message: 'hello' }
+	      }
+	    },
+	    // 自定义验证函数
+	    propF: {
+	      validator: function (value) {
+	        // 这个值必须匹配下列字符串中的一个
+	        return ['success', 'warning', 'danger'].indexOf(value) !== -1
+	      }
+	    }
+	  }
+	
+	
+	拿到的prop需要更改：
+	1、这个 prop 用来传递一个初始值；这个子组件接下来希望将其作为一个本地的 prop 数据来使用。在这种情况下，最好定义一个本地的 data 属性并将这个 prop 用作其初始值
+	2、这个 prop 以一种原始的值传入且需要进行转换。在这种情况下，最好使用这个 prop 的值来定义一个计算属性
+	
+	
+	class 和 style特性合并，其他特性父组件会替换掉子组件特性
+	传递一个非 prop 特性是指传向一个组件，但是该组件并没有相应 prop 定义的特性，改特性会自动添加到子组件的跟元素上
+	
+	
+	父组件传递对象到子组件，子组件复用导致对象更新页面不刷新问题：
+	子组件接受的数据 defaultval
+	1子组件可以直接在模板中使用defaultvalue  
+	2子组件定义承接的变量 item
+		可以在data中定义item ：Object 配合wath接受的defaultvalue跟新item值（deep，immediate）
+		可以在computed中定义item :return this.defaultval
+	data可以使用this.defaultvalue，但是只有一次赋值，不会监听defaultvalue的变化
+	            defaultvalue: {
+	                handler(newVal, oldVal) {
+	                    this.appItem=newVal,
+	                    this.isCollect = newVal.isCollect
+	                },
+	                deep: true,
+	                immediate: true
+	            }
+	
+	
+	
+	:key="Math.random()"
+	
+	
+	
+	DOM更新
+	1通过直接更改对象属性或数组项是无法实现表格表单对应数据刷新
+	1针对对象
+	Obj.prop = value  无法实现，需使用
+	Vue.set(obj,'prop',value)
+	2针对数组，
+	 arr[index] = value 无法实现，需使用
+	Vue.set(arr,index,newValue)或者
+	Arr.splice(index,1,newValue)
+	使用nextTick
+	
+	
+	子组件复用导致不更新问题处理方法：
+	1 调用组件添加key属性
+	2 子组件监听父组件传递值，对象深度监听
+	
+	
+	1在Vue生命周期的created()钩子函数进行的DOM操作一定要放在Vue.nextTick()的回调函数中 此时回调会发生在mounted之后
+	2在数据变化后要执行的某个操作，而这个操作需要使用随数据改变而改变的DOM结构的时候，这个操作都应该放进Vue.nextTick()的回调函数中
+	3为了在数据变化之后等待 Vue 完成更新 DOM ，可以在数据变化之后立即使用Vue.nextTick(callback) 。这样回调函数在 DOM 更新完成后就会调用。打开弹窗，调用弹窗dom
+	
+	何时查询后台数据问题：
+	如果是弹窗，父组件执行：
+	      this.flowId=row.flowId
+	      this.advancedsearchdetailvisible = true;
+	      this.$nextTick(()=>{
+	        this.$refs.flowInformation.getFlowDetail(this.flowId)
+	      })
+	如果路由跳转，在父组件mounted执行：
+	this.flowId=this.$route.query.flowId
+	this.$refs.flowInformation.getFlowDetail(this.flowId)
+	
+	使用ref设置元素样式
+	this.$refs.ref.style.color='red'
+	.style.cssText
+	
+	
+	
+
+

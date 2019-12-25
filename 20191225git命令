@@ -1,0 +1,289 @@
+git
+
+配置用户：
+git config --global user.name "r00310556"
+git config --global user.email "xiaoming@huawei.com"
+git config -l
+
+配置秘钥：生成-添加
+$ ssh-keygen -t rsa -C "xiaoming@huawei.com"
+
+
+
+
+
+
+远程仓库
+本地Git仓库和远程仓库之间的传输通过SSH加密
+
+创建ssk
+在用户主目录下，看看有没有.ssh目录，如果有，再看看这个目录下有没有id_rsa和id_rsa.pub这两个文件，如果有的话，直接跳过此如下命令，如果没有的话，打开命令行，输入如下命令生成ssk：ssh-keygen  -t rsa –C “youremail@example.com”, 
+id_rsa是私钥，不能泄露出去，id_rsa.pub是公钥，可以放心地告诉任何人。
+添加ssk
+在远程仓库settings-Add SSH Key黏贴id_rsa.pub文件的内容。
+
+先有本地库文件
+Git init
+本地仓库关联远程库
+git remote add origin https://github.com/tugenhua0707/testgit.git
+推送到远程，使用 git push -u（第一次）
+推送本地到远程git push origin master
+先有远程库文件：
+git clone
+
+Git基本常用命令如下：
+git init
+git add readme.txt添加到暂存区
+git commit提交到版本库
+git status来查看是否还有文件未提交
+git diff readme.txt改了什么
+git log
+git reset  --hard HEAD^ 版本回退
+git reset  --hard HEAD~100 回退到前100步
+git reset  --hard 版本号  git reflog 查看版本号
+cat readme.txt查看内容
+git checkout  -- file 丢弃工作区的修改（注意是两个-，如果一个是新建分支）
+rm b.txt 删除文件，删除磁盘文件
+Git  rm dist.rar 删除暂存区文件，
+只要没有commit之前，想在版本库中恢复文件操作git checkout  -- b.txt
+
+本地删除的文件恢复：
+看看工作区的变化
+git status 
+查看文件变动	deleted:Application/Home/View/Index/Index.html modified修改
+记住删除文件的路径
+拉取最近一次提交到版本库的文件到暂存区  改操作不影响工作区
+git reset HEAD Application/Home/View/Index/Index.html（注释：上面的那个路径）
+Unstaged changes after reset:
+D Application/Home/View/Index/Index.html
+恢复删除的文件git checkout  Application/Home/View/Index/Index.html
+
+　　mkdir：         XX (创建一个空目录 XX指目录名)
+　　pwd：          显示当前目录的路径。
+　　git init          把当前的目录变成可以管理的git仓库，生成隐藏.git文件。
+　　git add XX       把xx文件添加到暂存区去。
+　　git commit –m “XX”  提交文件 –m 后面的是注释。
+　　git status        查看仓库状态
+　　git diff  XX      查看XX文件修改了那些内容
+　　git log          查看历史记录
+　　git reset  --hard HEAD^ 或者 git reset  --hard HEAD~ 回退到上一个版本
+　　(如果想回退到100个版本，使用git reset –hard HEAD~100 )
+　　cat XX         查看XX文件内容
+　　git reflog       查看历史记录的版本号id
+　　git checkout -- XX  把XX文件在工作区的修改全部撤销。
+　　git rm XX          删除XX文件
+　　git remote add origin https://github.com/tugenhua0707/testgit 关联一个远程库
+　　git push –u(第一次要用-u 以后不需要) origin master 把当前master分支推送到远程库
+　　git clone https://github.com/tugenhua0707/testgit  从远程库中克隆
+　　git checkout –b dev  创建dev分支 并切换到dev分支上
+　　git branch  查看当前所有的分支
+　　git checkout master 切换回master分支
+　　git merge dev    在当前的分支上合并dev分支
+　　git branch –d dev 删除dev分支
+　　git branch name  创建分支
+　　git stash 把当前的工作隐藏起来 等以后恢复现场后继续工作
+　　git stash list 查看所有被隐藏的文件列表
+　　git stash apply 恢复被隐藏的文件，但是内容不删除
+　　git stash drop 删除文件
+　　git stash pop 恢复文件的同时 也删除文件
+　　git remote 查看远程库的信息
+　　git remote –v 查看远程库的详细信息
+　　git push origin master  Git会把master分支推送到远程库对应的远程分支上
+分支操作
+　　查看分支：git branch
+	查看远程分支git branch -r 　　
+	创建分支：git branch name
+　　切换分支：git checkout name
+　　创建+切换分支：git checkout –b name
+　　合并某分支到当前分支：git merge name
+　　删除分支：git branch –d name
+
+
+四个工作区域
+工作区 ：本地磁盘目录
+版本库 ：.git目录
+版本库中有：stage暂存区和master目录（本地仓库）
+远程仓库：托管代码的服务器
+工作区-git add 到-暂存区 - git commit 到- Master -git push到 远程库
+
+文件四种状态：
+Untracked:   未跟踪, 此文件在文件夹中, 但并没有加入到git库, 不参与版本控制. 通过git add 状态变为Staged.
+Unmodify:   文件已经入库, 未修改, 即版本库中的文件快照内容与文件夹中完全一致. 这种类型的文件有两种去处, 如果它被修改, 而变为Modified.如果使用git rm移出版本库, 则成为Untracked文件
+Modified: 文件已修改, 仅仅是修改, 并没有进行其他的操作. 这个文件也有两个去处, 通过git add可进入暂存staged状态, 使用git checkout 则丢弃修改过,返回到unmodify状态, 这个git checkout即从库中取出文件, 覆盖当前修改
+Staged: 暂存状态. 执行git commit则将修改同步到库中, 这时库中的文件和本地文件又变为一致, 文件为Unmodify状态. 执行git reset HEAD filename取消暂存,文件状态为Modified
+
+git add 
+提交到暂存区git add .
+
+git commit 
+从暂存区提交到本地版本库git commit -m 'description'
+
+git pull
+拉取远程分支并与本地合并：
+git pull = git fetch + git merge
+git pull <远程主机名origin> <远程分支名master>:<本地分支名rwx619768>
+如果合并到当前分支可省略本地分支名
+git pull origin master 获取远程master到本地master
+
+git push
+将本地分支的更新推送到远程主机：
+git push <远程主机名origin> <本地分支名rwx619768>:<远程分支名rwx619768>
+如果省略远程分支名则推送到存在追踪关系的远程分支（通常两者同名）
+git push origin master 推送本地master到远程master
+
+git stash ：
+将本地修改暂存git stash 
+查看 git stash list
+还原 git stash pop
+
+分支：
+本地不使用分支开发：
+在本地master开发，直接推送到远程master
+在本地master开发，推送到远程分支然后merge到远程master分支
+使用本地分支开发：
+切换分支：git checkout rwx619768
+分支更新：git pull origin master
+分支开发：修改- add- commit
+分支推送：git push origin rwx619768
+远程合并：merge请求
+切换分支：git checkout master
+分支合并：git merge rwx619768 
+
+从本地master推送
+从master推送到远程master  git push origin master 
+从master推送到远程分支    git push origin master:rwx619768
+
+从本地分支推送
+从本地分支推送到远程master  git push origin rwx619768:master 
+从本地分支推送到远程分支    git push origin rwx619768
+
+推荐使用分支开发：
+把本地分支更新到最新： git pull origin master:rwx619768（如果当前分支在rwx619768可省略不写）
+把本地分支推送到远程分支：git push origin rwx619768（如果远程没有rwx619768会创建一个远程分支）
+把远程分支合并到远程master：merge请求
+
+多人协作工作模式一般是这样的：
+推送自己的修改：git push origin branch-name
+如果推送失败，则因为远程分支比你的本地更新早，需要先用git pull试图合并。
+如果合并有冲突，则需要解决冲突，并提交commit。再次发起推送
+
+提示：
+提交都是提交到当前分支，
+推送都是推送到远程机器，可推送到不同的分支；
+合并针对同一端的不同分支
+
+常用命令：
+git config --list
+git  remote  -v 查看本地关联的远程仓库
+git  remote  remove  origin 删除本地关联的远程仓库
+git  remote  add  origin url //关联本地到远程仓库
+git  checkout   rwx619768  //切换到自己分支
+修改文件
+git add  .
+git status
+git pull origin master
+git commit - m '提交'
+git push origin rwx619768  
+添加-提交-推送-合并
+q退出
+
+
+
+
+
+
+
+
+
+
+
+
+1. git config配置文件
+
+ 我们知道config是配置的意思，那么git config命令就是对git进行一些配置。而配置一般都是写在配置文件里面，那么git的配置文件在哪里呢？互动一下，先问下大家。
+你们所知的git配置文件是放在哪里的？git有几个配置文件呢？是的，聪明的你，稍微查查资料就知道咯，git里面一共有3个配置文件，首先是：仓库级配置文
+件：该文件位于当前仓库下，路径.git/，文件名为.gitconfig，这个配置中的设置只对当前所在仓库有效仓库级配置文件内容如下：
+
+第二个是全局级配置文件：win7下面路径，在用户目录下，以个人的PC机为例，其路径为：C:\Users\zuoyu.ht，文件名为.gitconfig
+全局级配置文件内容如下：
+
+ 
+最后是系统级配置文件：本地git的安装目录下，以左御的git安装路径为例：D:\Program Files\Git\etc，文件名为：gitconfig，内容如下：
+
+从三个图的对比中，我们可以发现，有些配置项的名称是一样的，比如“core”，在git中，每一项的配置名称又叫做“section”，
+“section”下面的每一行对应着一个key和一个value。需要注意的是：系统级配置文件不同于另外两个配置文件，是因为他少了
+一个点，因此用vim打开的时候，是没有高亮显示的。”core”这个section在每个配置文件中都有，那么它git最终会调用哪个配置
+文件呢？这就要有一个先后顺序了。
+2. 配置文件如何生效的
+对于git来说，配置文件
+的权重是仓库>全局>系统。Git会使用这一系列的配置文件来存储你定义的偏好，它首先会查找/etc/gitconfig文件（系统级），该
+文件含有对系统上所有用户及他们所拥有的仓库都生效的配置值。接下来Git会查找每个用户的~/.gitconfig文件（全局级）。最后
+Git会查找由用户定义的各个库中Git目录下的配置文件.git/config（仓库级），该文件中的值只对当前所属仓库有效。以上阐述的三
+层配置从一般到特殊层层推进，如果定义的值有冲突，以后面层中定义的为准，例如：.git/config和/etc/gitconfig的较量中，
+.git/config取得了胜利。虽然你也可以直接手动编辑这些配置文件，但是运行git config命令将会来得简单些。下面我们就来看看如
+何利用git config命令来编辑配置各个级别的文件。
+   3. 用git config命令查看配置文件
+命令参数 –list, 简写 -l
+格式：git config [–local|–global|–system] -l
+查看仓库级的config，即.git/.config，命令：git config –local -l
+查看全局级的config，即C:\Users\zuoyu.ht\.gitconfig，命令：git config –global -l
+查看系统级的config，即D:\Program Files\Git\etc\gitconfig，命令：git config –system -l
+查看当前生效的配置，命令：git config -l，这个时候会显示最终三个配置文件计算后的配置信息，如下图：
+
+   4. 使用git config命令编辑配置文件
+编辑的英文单词是什么，没错，edit
+命令参数 –edit, 简写 -e
+格式：git config [–local|–global|–system] -e
+查看仓库级的config，即.git/.config，命令：git config –local -e，与–list参数不同的是，git config -e默认是编辑仓库级的配置文件。
+查看全局级的config，即C:\Users\zuoyu.ht\.gitconfig，命令：git config –global -e
+查看系统级的config，即D:\Program Files\Git\etc\gitconfig，命令：git config –system -e
+   执行这个命令的时候，git会用配置文件中设定的编辑器打开配置文件。
+     5. 增加一个配置项
+参数 –add
+格式: git config [–local|–global|–system] –add section.key value(默认是添加在local配置中)
+注意add后面的section,key,value一项都不能少，否则添加失败。比如我们执行：git config –add cat.name tom
+
+然后查看local中的配置：
+
+注意增加一项配置而不赋值 git config –add cat.age，或者单单增加一个section,git config –add cat1，不会成功。
+6.获取一个配置项
+有时候，我们并不需要查看所有配置的值，而是查看某个配置项的值，怎么做呢？
+命令参数 –get
+格式：git config [–local|–global|–system] –get section.key(默认是获取local配置中内容)
+我们先往global配置中写入一个cat.name=Tomcat的配置项，再使用git config –get cat.name看看得到的是什么
+
+结果就是local中的cat.name=Tom，因此git config –get section.key 等价于git config –local –get section.key
+如果获取一个section不存在的key值，不会返回任何值
+如果获取一个不存在的section的key值，则会报错
+
+ 7.删除一个配置项
+命令参数 –unset
+格式：git config [–local|–global|–system] –unset section.key
+相信有了前两个命令的使用基础，大家举一反三就知道改怎么用了，来，我们试试删除local配置中的cat.name
+
+1.增
+1.git config --global --add configName configValue
+2.删
+git config  --global --unset configName   (只针对存在唯一值的情况)
+3.改
+git config --global configName configValue
+ 4.查
+git config --global configName
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

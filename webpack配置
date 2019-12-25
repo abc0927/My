@@ -1,0 +1,679 @@
+使用vue-cli自动创建项目vue init webpack my-project (简单不说)
+使用webpack手动创建项目npm init 生成package.json；然后手动添加相关配置文件：
+
+WebPack可以看做是模块打包机：它做的事情是，分析你的项目结构，找到JavaScript模块以及其它的一些浏览器不能直接运行的拓展语言（Scss，TypeScript等），并将其转换和打包为合适的格式供浏览器使用
+准备
+1、创建package.json文件npm init命令可以自动创建这个package.json文件
+2、安装
+//全局安装
+npm install -g webpack
+//安装到你的项目目录
+npm install --save-dev webpack
+3创建文件目录结构：
+app文件夹用来存放原始数据和我们将写的JavaScript模块，
+public文件夹用来存放之后供浏览器读取的文件（包括使用webpack打包生成的js文件以及一个index.html文件）
+index.html --放在public文件夹中;目的在于引入打包后的js文件
+Greeter.js-- 放在app文件夹中;
+main.js-- 放在app文件夹中;
+新建webpack.config.js文件并配置：
+
+初始化项目：
+安装node
+Npm init 生成package.json文件
+package.json
+模块的描述文件，被称为package.json
+    name - 包名.
+    version - 包的版本号。
+    description - 包的描述。
+    homepage - 包的官网URL。
+    author - 包的作者，它的值是你在https://npmjs.org网站的有效账户名，遵循“账户名<邮件>”的规则，例如：zhangsan <zhangsan@163.com>。
+    contributors - 包的其他贡献者。
+    dependencies / devDependencies - 生产/开发环境依赖包列表。它们将会被安装在 node_module 目录下。
+    repository - 包代码的Repo信息，包括type和URL，type可以是git或svn，URL则是包的Repo地址。
+    main - main 字段指定了程序的主入口文件，require('moduleName') 就会加载这个文件。这个字段的默认值是模块根目录下面的 index.js。
+    keywords - 关键字
+还可以设置script、license
+
+注意事项：
+1、关于ts
+TypeScript 将会默认的查看 ./node_modules/@types 文件夹，自动从这里来获取模块的类型定义，当然了，你需要独立安装这个类型定义。
+比如，你希望 core.js 的类型定义，那么，你需要安装这个库的定义库。
+npm install --save @types/core-js
+package.json中的dependencies中的@types
+
+
+直接导入模块，在.ts文件中是不行的
+这是由于typescript自身的机制，需要一份xx.d.ts声明文件，来说明模块对外公开的方法和属性的类型以及内容
+获取类型声明文件只需要使用npm
+npm install --save-dev @types/node
+就可以获得有关node.js v6.x的API的类型说明文件。之后，就可以顺利的导入需要的模块了:
+import * as http from 'http';
+对于内建模块，安装一个@types/node模块可以整体解决模块的声明文件问题。
+对于第三方模块
+
+2、关于npm script
+npm script是一个任务执行者
+原理：
+里面的每个属性对应一段shell脚本，实现原理是通过调用shell去运行脚本命令(调用可执行程序运行文件),将当前目录的node_modules/.bin子目录加入PATH变量，执行结束后，再将PATH变量恢复原样。
+项目目录下的node_modules/.bin/目录专门存放安装包的可执行程序,
+查看当前项目所有的脚本命令： npm run
+
+参数：
+--config 执行配置文件
+& 同时并行执行
+&& 前一个执行成功再执行最后一个
+向脚本传入参数必须使用 -- 标记
+通配符：
+dev:'node **/*.js',	*表示任意文件名，**表示任意一层子目录
+
+钩子：
+pre和post两个钩子
+用户执行npm run build的时候，会自动按照下面的顺序执行，npm run prebuild && npm run build && npm run postbuild因此，可以在这两个钩子里面，完成一些准备工作和清理工作。
+
+    "server": "webpack-dev-server --open --inline --progress --config webpack.config.js"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "vendor-build": "webpack --config webpack.config.vendor.js",
+    "dev": "node --max-old-space-size=4096 devserver.js",
+    "app-build": "webpack --verbose",
+    "app-build:prod": "webpack --env.prod",
+    "clean": "rimraf ./dist",
+    "prebuild:prod": "npm run clean && npm run vendor-build",
+    "build:prod": "webpack --config webpack.config.vendor.js --env.prod&&webpack --env.prod",
+    "prebuild:scence": "rimraf ./scencedist",
+    "build:scence": "webpack --config webpack.scence.config.js "
+
+
+变量：
+npm_package_前缀 
+变量可以拿到package.json里面的字段 
+在调用的js文件中，通过环境变量process.env对象，拿到package.json的字段值，如 
+process.env.npm_package_name 
+支持嵌套字段,如：npm_package_script_dev（连接符:或者-全部用_替换)
+npm run env 可以列出所有环境变量(node 进程的环境变量)
+在script中使用：${npm_package_config_port}
+
+process.env.npm_config_xxx 
+变量来拿到 npm的配置项。
+
+npm_lifecycle_event变量，返回当前正在运行的脚本名称如dev、start
+在同一个脚本文件里面，为不同的npm scripts命令编写代码
+const TARGET = process.env.npm_lifecycle_event;
+if (TARGET === 'test') {
+  console.log(`Running the test task!`);
+}
+
+if (TARGET === 'pretest') {
+  console.log(`Running the pretest task!`);
+}
+
+if (TARGET === 'posttest') {
+  console.log(`Running the posttest task!`);
+}
+
+npm script中的webpack
+开发模式
+"dev": "webpack --config webpack.config.js",（或者直接  "dev":"webpack"   webpack会直接自动去找webpack.config.js文件并执行）
+"dev": "webpack --mode development",
+"dev":"webpack --mode development --progress --colors"
+--progress ：显示编译过程和百分比　　--colors：编译结果显示不同的颜色
+mode选项有3个可选值：production （默认） 、development、none。告知webpack使用相应模式的内置优化
+配置后会将process.env.NODE_ENV 变量设置为对应的值，只设置NODE_ENV则不会自动设置mode
+
+
+
+
+//生产模式
+"prod": "webpack -p", 
+"prod":"webpack --mode production",
+
+开发服务器模式
+"server": "webpack-dev-server",
+
+监控模式
+"watch": "webpack --mode development --watch"
+"watch": "webpack --watch"
+"watch":"webpack -d --watch"
+
+环境变量：
+
+在node中，有全局变量process，表示的是当前的node进程。
+process.env包含着关于系统环境的信息(可以访问到配置的环境变量信息)process.env.path
+但是process.env中并不存在NODE_ENV这个东西。
+NODE_ENV是用户一个自定义的变量，在webpack中它的用途是判断生产环境或开发环境的依据的。
+
+为了查看 process的基本信息，我们可以在文件夹中 新建一个 process.js 文件，在里面加一句代码：
+console.log(process);然后进入该文件夹，执行 node process.js 
+
+
+环境变量：操作系统用来指定运行环境的一些参数
+作用范围：
+所有的在cmd命令行下对环境变量的修改只对当前窗口有效，不是永久性的修改。也就是说当关闭此cmd命令行窗口后，将不再起作用。
+永久性修改环境变量的方法有两种：一种是直接修改注册表（此种方法目前没试验过），
+另一种是通过我的电脑-〉属性-〉高级，来设置系统的环境变量
+
+windos命令行设置环境变量（临时）：
+查看所有环境变量set（set查看系统环境变量，npm run env 是node进程的所有环境变量包含系统环境变量）
+查看具体环境变量set NODE_ENV 
+设置环境变量
+set NODE_ENV=production 
+set path="d:\nmake.exe"
+环境变量追加值 
+set 变量名=%变量名%;变量内容 
+set path=%path%;C:\web;C:\Tools 
+删除环境变量 set NODE_ENV=
+
+打包配置全局环境变量：
+"build": "NODE_ENV=production webpack --progress --colors --devtool cheap-module-source-map"
+"dev": "NODE_ENV=development webpack-dev-server --progress --colors --devtool cheap-module-eval-source-map --hot --inline",
+
+安装webpack webpack-cli 新建webpack.config.js文件
+Webpack.config.js
+
+为了区分开发环境和正式环境，配置运行命令，然后在webpack.config.js中可以通过 process.env.NODE_ENV 区分正式环境还是开发环境即可。
+webpack --config webpack.config.js --env.prod
+isDevBuild = !(env && env.prod);
+new webpack.DefinePlugin({
+          "process.env.NODE_ENV": isDevBuild ? '"development"' : '"production"'
+        }),
+
+path.resolve() 方法会把一个路径或路径片段的序列从右往左解析直到构造完成一个绝对路径.如果在处理完所有给定的 path 片段之后还未生成绝对路径，则再加上当前工作目录。
+path.resolve(__dirname, 'dist', 'lib')
+path.resolve('/foo/bar', './baz');// 返回: '/foo/bar/baz'
+path.resolve('/foo/bar', '/tmp/file/');// 返回: '/tmp/file'
+path.resolve('wwwroot', 'static_files/png/', '../gif/image.gif');// 如果当前工作目录是 /home/myself/node，则返回 '/home/myself/node/wwwroot/static_files/gif/image.gif'
+
+path后面有没有/修饰符号无影响
+path前面有修饰符号：
+遇到/path结束
+遇到./path和path相同，继续往左拼接（./ 可以看成没有）
+遇到../path继续往前拼接，且跳出一级目录
+“__dirname”是node.js中的一个全局变量，它指向当前执行脚本所在的目录
+
+path.join(__dirname,'path') 
+..或者../会返回上一层目录
+path前面加/或者./后面加/都没有影响只有最后一个path后面加的/会体现出来
+
+配置文件输出数据类型：对象，函数
+Module.exports={}
+Module.exports=(env)=>{
+	Return [{}]
+}
+
+配置文件接收参数（开发环境或生产环境）
+1、script命令行中通过--env.pord中的--传递参数，在配置文件中使用函数接收
+2、script命令行中通过--config指定执行配置文件文件
+
+context选项:
+ context:path.join(__dirname, 'src'),//基础目录，绝对路径；默认是webpack.config.js 的路径
+配置入口
+单入口：
+entry:"./app.js"
+entry:["babel-polyfill","./app.js"]
+多入口：
+entry:{
+	app:"./src/app/app.js",
+	admin:"./src/admin/admin.js"
+}
+
+配置出口
+单出口
+output:{
+	filename:"[hash].bundle.js",
+	path:path.resolve(__dirname,"dist"),
+	publicPath:""
+}
+多出口
+output:{
+	filename:"[name]/[hash].bundle.js",
+	path:path.resolve(__dirname,"dist"),
+	publicPath:""
+}
+
+配置devtool
+SourceMap一个存储源代码与编译代码对应位置映射的信息文件
+Webpack打包生成的.map后缀文件，使得我们的开发调试更加方便，它能帮助我们链接到断点对应的源代码的位置进行调试（//# souceURL），而devtool就是用来指定source-maps的配置方式的
+devtool: isDevBuild ? "source-map" : "",
+devtool选项值：
+source-map
+cheap-module-source-map生产环境推荐
+eval-source-map 开发环境推荐
+cheap-module-eval-source-map
+
+配置本地服务器devServer
+webpack-dev-server它通过nodejs的express 来起一个server提供静态文件服务，同时它根据配置信息（xxx.config.js）来打包资源，存在内存中，同时当你的代码发生改变的时候，它还可以刷新你的浏览器。它是一个单独的npm module，通过npm install webpack-dev-server --save-dev来给项目安装依赖。通过devServer选项配置
+contentBase加载页面index.html目录
+port端口
+inline:true浏览器自动刷新
+historyApiFallback:true
+package.json中 "dev":"webpack-dev-server --open"
+host 配置项用于配置DevServer服务器监听的地址。配置host:0.0.0.0
+我的IP地址是：10.10.42.3。那么像上图这样配置后，
+局域网内其它机器需要访问：10.10.42.3:8080 。
+本机访问：10.10.42.3:8080 或者 localhost:8080 或者 127.0.0.1:8080
+
+
+      devServer: {
+        contentBase: "./dist", //本地服务器加载页面所在默认目录（http://localhost:8081/所在页面）
+        publicPath: "/dist", //启动服务生成虚拟index.html路径，启动服务的访问地址路径：localhost:8081/dist2 启动地址首先在devServer的publicPath取，没有去output的publicPath取，没有默认/；如果路径和output中的publicPath不一致，会找不到资源报错，所以一般情况下都要保证devServer中的publicPath与output.publicPath保持一致
+        // host:"0.0.0.0",//10.40.89.189:8080
+        host: "localhost.huawei.com",
+        port: "8080",
+        inline: true,
+        historyApiFallback: true,
+        disableHostCheck: true,
+        hot: true
+        // proxy:{//代理
+        //     '/v1':{
+        //         target:'http://zcl.huawei.com:30011',
+        //         changeOrigin:true,
+        //         pathRewrite:{
+        //             '^/v1':''
+        //         }
+        //     }
+        // },
+      },
+
+
+配置loaders（module.rules)
+通过使用不同的loader，webpack有能力调用外部的脚本或工具，实现对不同格式的文件的处理
+Loaders需要单独安装并且需要在webpack.config.js中的module关键字下rules数组进行配置，
+test:匹配loasers所处理文件扩展名的正则表达式，
+test:/(\.jsx|\.js)$/,
+test: /\.(png|jpe?g|gif|svg)(\?\S*)?$/,
+use指定使用的loader：对象数组或loader名称字符串或插件
+Use:[{loader:"",options:{}}]
+Use:["css-loader","less-loader"]
+Use:"vue-loader"
+use: ExtractTextPlugin.extract({
+	      fallback:"style-loader",	
+              use: "css-loader"
+})
+include/exclude:手动添加必须处理的文件或屏蔽不需要处理的文件（可选）
+exclude: /node_modules/,
+webpack内置可处理JSON文件，所以json不需要加载loader
+同一个文件引入多个loader的方法（从后向前配置）
+安装loader
+npm install --save-dev style-loader css-loader
+配置module:{
+	rules:[
+	{
+		test:/\.css$/,
+		use:[{
+			loader:"style-loader"
+		},{
+			loader:"css-loader"
+		}]
+	},
+	{
+	      test: /\.vue$/,
+	      use: 'vue-loader'
+	},
+	{
+		Test:/\.less$/,
+		Use:["style-loader","css-loader","less-loader"]
+	}
+]}
+		
+
+样式文件loader及打包：
+          {
+            test: /\.css$/,
+            use: ExtractTextPlugin.extract({
+	      fallback:"style-loader",	
+              use: "css-loader"
+            })
+	    //use: ["style-loader", "css-loader"]
+          },
+          {
+            test: /\.less$/,
+	    use: ExtractTextPlugin.extract({
+	      fallback:"style-loader",//抽离失败回退方案	
+              use: ["css-loader", "less-loader"]
+            })
+            //use: ["style-loader", "css-loader", "less-loader"]
+          },
+使用style-loader将样式文件打包到js文件中；
+使用extractTextPlugin将样式文件抽离成单独的css文件；
+1使用style-loader搭配css-loader less-loader 可以把样式文件打包到js中使用
+2使用extractTextPlugin抽离样式文件（new ExtractTextPlugin('./style.css')），
+	抽离失败使用fallback加载，抽离成功使用HtmlWebpackPlugin引入使用
+Extract-text-webpack-plugin还不支持webpack4需要使用：npm install  extract-text-webpack-plugin@next
+使用PostCSS来为CSS代码自动添加适应不同浏览器的CSS前缀
+npm install --save-dev postcss-loader 。。。	
+{
+  test: /\.style.js$/,
+  use: [
+    'style-loader',
+    { loader: 'css-loader', options: { importLoaders: 1 } },
+    { loader: 'postcss-loader', 
+options: {
+    ident: 'postcss',
+    plugins: (loader) => [
+      require('postcss-import')({ root: loader.resourcePath }),
+      require('postcss-cssnext')(),
+      require('autoprefixer')(),
+      require('cssnano')()
+    ]
+  }
+ }
+  ]
+}
+
+
+图片文件字体文件loader及打包：
+          {
+            test: /\.(eot|svg|ttf|woff|woff2|otf)(\?\S*)?$/,
+            use: "file-loader"
+          },
+          {
+            test: /\.(png|jpe?g|gif|svg)(\?\S*)?$/, //xxx.gif?12adfad21
+            use: [
+              {
+                loader:"file-loader",
+                options:{
+                  name:'images/[hash].[ext]',//[path]是在开发的目录文件,路径自动添加,引用路径自动调整
+                  // outputPath:'test',//输出路径，如同在name中嵌套顶级路径，引用路径自动调整
+                  // publicPath: 'test'//发布路径，改变的是页面资源的引用路径，会拼接name，(最好不用，用的时候和outputPath相同)
+                }
+              }
+            ]
+          }
+
+使用file-loader打包图片文件字体文件并自动更新图片的引用地址；
+① 使用file-loader或url-loader可对图片进行打包操作
+② url-loader可将图片转成base64格式
+
+file-loader
+file-loader 就是将文件（由于一般是图片文件为主，所以下面通常使用图片两字作为替代，方便理解。其他的包括字体文件等），在进行一些处理后（主要是处理文件名和路径），移动打包后的目录中
+1将要加载的文件复制到指定目录；2生成请求文件资源URL；文件名的处理及文件路径的处理
+默认情况下，经file-loader处理后的文件的文件名变成了文件内容的MD5 hash
+outputPath指定文件的输出目录，此处应为相对于webpack输出目录的相对路径。
+publicPath指定请求文件时的URL。使用绝对路径，如/dist/static/img/配置，生成的URL为/dist/static/img/${name}，默认使用webpack的publicPath,如果要把资源放cdn可以单独设置此值
+outputPath, publicPath一定要以/结尾
+
+
+js文件loader使用babel-loader （针对的使用ES6语法项目）
+	{
+            test: /\.js$/,
+            exclude: /node_modules/,
+            use: "babel-loader"
+          },
+配置babel
+一个编译js的平台，转码核心包babel-core Es6:babel-env-preset JSX:babel-preset-react
+安装npm install --save-dev babel-core babel-loader babel-preset-env babel-preset-react
+在options进行配置或者在.babelrc文件单独配置（webpack会自动调用.babelrc里的babel配置选项）
+options:{presets:["env","react"]}
+.babelrc文件是一个json文件
+{
+    "presets": ["es2015"],//告诉babel要转换的源码使用哪些新的语法
+    "plugins": ["transform-object-rest-spread"]//告诉babel使用哪些插件转换代码
+}
+.babelrc文件内的插件省略了babel-plugin-,所以在安装插件的时候要带上
+Npm install babel-plugin-es2015 babel-plugin-transform-object-rest-spread -D
+关于babel-core与babel-loader版本不一致问题，npm install --save-dev @babel/core
+两种解决方案:
+回退低版本
+npm install -D babel-loader@7 babel-core babel-preset-env
+更新到最高版本:
+npm install -D babel-loader @babel/core @babel/preset-env webpack
+
+ts文件的loader安装typescript 使用awesome-typescript-loader或者ts-loader配置tsconfig.json文件
+Npm install typescript awesome-typescript-loader -D
+TypeScript是JavaScript的一个超集，主要提供了类型检查系统和对ES6语法的支持,目前没有任何环境支持运行原生的TypeScript代码，必须通过构建将它转换成JavaScript代码后才能运行。
+Webpack.config.js配置loader
+          {
+            test: /\.ts$/,
+            use: "awesome-typescript-loader"
+          },
+tsconfig.json配置ts选项
+{
+	“compilerOptions”: {
+		"module": "commonjs",		// 编译出的代码采用的模块规范
+		"target": "es5",		// 编译出的代码采用ES的哪个版本
+		"sourceMap": true		// 输出Source Map以方便调试
+	},
+	"exclude": [				// 不编译这些目录里的文件
+		"node_modules"
+	],
+	"include":[
+    		"./src/**/**/*.ts"
+  	],
+}
+
+vue文件的loader使用vue-loader和vue-template-compiler
+npm i vue vue-loader vue-template-compiler -D
+          {
+            test: /\.vue$/,
+            use: "vue-loader"
+          },
+
+如果使用了Vue-loader的15x以上的版本，
+在Webpack.config.js中添加：
+const VueLoaderPlugin = require('vue-loader/lib/plugin')
+在下面的plugins中添加 new VueLoaderPlugin(),
+如果出现vue版本冲突问题：Vue packages version mismatch
+将vue的版本改成和vue-template-compiler的版本一致，
+npm install vue@2.5.13 --save
+
+
+externals选项：需要引用一个库，但是又不想让webpack打包
+定义：
+直接在页面使用script标签手动引入，或者使用CDN资源，不想webpack打包此库到vendor.js中，使用externals去配置
+在运行时再去从外部获取这些扩展依赖
+externals默认的模式是global，也就是以全局变量的模式加载所引入外部的库，通过在 script 标签中引入来实现
+应用：
+webpack的默认打包机制会将我们项目中通过npm引入的js库全部打包成一个vendor.js文件里面，此文件很大，导致首次加载极慢
+vue.js 、vuex.js 、vue-router.js 这些外部库，基本不会变的，如果将它们独立出来单独加载就能利于浏览器的缓存机制并减小vendor.js
+1把外部库的js文件存放到static文件夹下，
+2项目模板html中使用script引入 
+3externals配置引用库 
+externals:{
+	"vue": "Vue",//小写key值是import from "vue" 时用的名称，大写的value值是通过script方式引入js库后它的全局变量，这时vue库的全局变量是首字母大写的
+	"vue-router": "VueRouter"//可以通过打印window查看script引入库的变量
+	"element-ui":"ELEMENT"
+},
+4项目代码中使用import引入使用 ：import Vue from 'vue'
+5优化后的浏览器加载效果，全部是独立加载各自的js文件，可以利用浏览器的缓存机制
+注意：自己的库依赖vue，但是通过script加载自己的库通过npm安装vue库时，无法找到依赖的vue，所以要在前面通过script引入vue；然后配置externals
+通过script引入的库，如果不配置externals则在自己库中需要使用window.调用，但自己开发的库一般不会使用window.调用
+Vue中如何引入第三方JS库方法：
+1script绝对路径直接引入，全局可用
+2script绝对路径直接引入，配置externals后，import 引入后再使用
+3配置resolve.alias路径别名，import引入后使用
+4配置resolve.alias路径别名，配置ProvidePlugin插件，全局调用
+
+
+resolve选项：
+Webpack 在启动后会从配置的入口模块出发找出所有依赖的模块，Resolve 配置 Webpack 如何寻找模块所对应的文件
+alias:配置项通过别名来把原导入路径映射成一个新的导入路径；$ 符号来缩小范围到只命中以关键字结尾的导入语句
+	"react$":"/path/to/react.min.js"只会把以react结尾的导入语句替换成配置路径；'react/path1/path2'这种就不会被替换；
+extensions:配置后缀列表，在导入语句没带文件后缀时，webpack尝试用此配置的后缀去访问文件是否存在，默认[".js",".json"]从前往后尝试寻找，最后找不到会报错
+modules:配置webpack去哪些目录下寻找第三方模块，默认只会去node_modules找,
+大量引用某路径下的资源时，如./src/components/a,把components配置到modules,引用时直接使用components下的名称import from 'a'
+modules:['./src/components','node_modules']
+  resolve: {
+        extensions: [".js", ".ts", "vue", ".json"],
+        alias: {
+          "@": path.resolve("src")
+        }
+        // modules:[],
+      },
+
+配置插件plugins
+插件会在整个构建过程中生效，执行相关的任务（loaders是在打包构建过程中用来处理源文件的）
+第三方插件要安装-引入-创建实例在plugins数组添加插件实例，webpack内置插件直接添加实例
+HtmlWebpackPlugin
+这个插件的作用是依据一个简单的index.html模板，生成一个自动引用你打包后的JS文件的新index.html。这在每次生成的js文件名称不同时非常有用（比如添加了hash值）。npm install --save-dev html-webpack-plugin
+修改项目：
+1、移除public文件夹，利用此插件，index.html文件会自动生成，此外CSS已经通过前面的操作打包到JS中了。
+2、在app目录下，创建一个index.tmpl.html文件模板，这个模板包含title等必须元素，在编译过程中，插件会依据此模板生成最终的html页面，会自动添加所依赖的 css, js，favicon等文件，index.tmpl.html中的模板源代码如下：
+Hot Module Replacement（HMR）webpack内置插件直接添加插件实例不需要安装和加载
+这个插件允许你在修改组件代码后，自动刷新实时预览修改后的效果
+修改：
+1、在webpack配置文件中添加HMR插件；new webpack.HotModuleReplacementPlugin()//热加载插件
+2、在Webpack Dev Server中添加“hot:true”参数；
+
+
+关于publicPath
+./表示当前目录
+../表示父级目录
+/表示根目录
+package.json：
+    "vendor-build": "webpack --config webpack.config.vendor.js",
+    "dev": "node --max-old-space-size=4096 devserver.js",
+    "clean": "rimraf ./dist",
+    "prebuild:prod": "npm run clean && npm run vendor-build",
+    "build:prod": "webpack --config webpack.config.vendor.js --env.prod&&webpack --env.prod"
+运行npm run build:prod
+会先执行prebuild:prod
+执行npm run clean 和 npm run verdor-build
+	使用webpack执行webpack.config.verdor.js文件没有参数
+然后执行build:prod
+	使用webpack执行webpack.config.verdor.js文件参数为env.prod
+	使用webpack执行webpack.config.js文件参数为env.prod
+
+publicPath: 顾名思义就是一个公共地址，用于处理静态资源的引用地址问题，比如图片的地址路径问题。尤其是在你打包图片生成的路径与html的不在同一个目录时，这个时候就必须用publicPath来指定引用路径。一般情况下都要保证devServer中的publicPath与output.publicPath保持一致
+
+output的publicPath
+	path 配置输出文件存放在本地的目录，必须是 string 类型的绝对路径。通常通过 Node.js 的 path 模块去获取绝对路径，path.resolve(__dirname, 'dist') //__dirname+'/dist'
+		output输出的js,url-loader解析的图片，file-loader生成的图片字体文件，HtmlWebpackPlugin生成的html文件，都会存放在以path为基础的目录下
+ 	publicPath处理静态资源引用地址用的，配置发布到线上资源的 URL 前缀，默认值是空字符串 ''，即使用相对路径；
+		并不会对生成文件的路径造成影响，主要是对你的页面里面引入的资源的路径做对应的补全，被许多Webpack的插件用于在生产模式下更新内嵌到css、html文件里的url值；
+		一般用这个来指定上线后的cdn域名;会为我们所有的资源都应用上publicPath设置的值
+如果publicPath:'/dist/'  图片引用前面会加上dist如：/dist/img.png 导致生产环境找不到资源，开发环境当前路径为index.html路径,绝对路径可以找到资源，但是要和内存打包路径一致
+如果publicPath:'./dist/' 图片引用前面会加上./dist 如：./dist/img.png 导致开发环境找不到资源
+如果publicPath:'' 	 图片引用路径为当前图片生成路径，开发环境可以找到，生产环境可以找到
+如果publicPath:'cdn'	 图片引用路径会加上cdn的绝对路径，生产环境把资源放置到cdn可以找到，开发环境找不到
+所以如果不用cdn，publicPath最好设置为空
+
+devserver的publicPath
+启动DevServer，资源还是会打包，只是把打包文件放在内存而不是本地
+DevServer除了去内存中查找内容以外，它还会到本地目录中查找内容，当在内存中找不到资源的时候就去contentBase本地目录去找
+publicPath是服务器所打包资源后的输出路径浏览器访问路径，如果没给默认是/然后会去找output中的publicPath,
+开发环境可访问的地址路径：此publicPath或空
+
+使用express启动服务：
+app.use(express.static('dist'))设置静态目录（前端静态文件），多个定义时：先定义先匹配而不是覆盖
+express.static()的返回值是一个函数，传递一个包含静态资源的目录给express.static中间件用于立即开始提供文件
+express会在静态资源目录下查找文件，所以不需要把静态目录dist作为url的一部分
+
+app.use([path,] function [, function...]);第一个参数path默认为 '/' ，
+app.use就是把指定的中间件加载到指定的请求路径下面，是用来给path注册中间函数
+path默认是’/’，会在处理用户的任何url请求前，先执行中间件函数，
+如果设置了path同时会处理path下的子路径；
+
+
+详细说明：
+入口起点(entry point)指示 webpack 应该使用哪个模块，来作为构建其内部依赖图的开始
+output 属性告诉 webpack 在哪里输出它所创建的 bundles向硬盘写入编译文件。注意，即使可以存在多个入口起点，但只指定一个输出配置
+loader 让 webpack 能够去处理那些非 JavaScript 文件,在module下的rules数组中配置test 属性，用于标识出应该被对应的 loader 进行转换的某个或某些文件；use 属性，表示进行转换时，应该使用哪个 loader。
+loader工具要安装但不需要引入直接使用
+插件plugins执行范围更广的任务；需要安装（npm）需要引入（require）使用 new 操作符来创建它的一个实例，放到 plugins 数组中
+mode模式development或者production
+
+入口数组语法：将多个依赖一起注入，并将依赖导向到一个chunk时，entry使用数组
+入口对象语法：定义可扩展入口（多页面应用程序场景，多个独立分离的依赖图）entry:{entryName:path1,entryName2:path2}
+output的最低要求是将它的值设置为一个对象filename输出文件的文件名path输出目录的绝对路径
+
+关于自动刷新：
+修改了css等源码并保存后，应该先触发一次webpack编译，在编译完成后，再通知浏览器去刷新。
+
+问题点：
+
+/**
+ * 坑：
+ * 1、需要安装插件：为js文件安装babel，并配置.babelrc;为vue文件安装vue-template-compiler;为ts文件安装 awesome-typescript-loader和typescript 并配置tsconfig.json
+ * 1、webpack升级到4需要额外安装webpack-cli
+ * 1、babel各库版本冲突导致编译失败：统一版本
+ * 2、vue版本和vue-template-compiler版本冲突问题
+ * 如果使用了Vue-template-compiler的15x以上的版本，还要在Webpack.config.js中添加，const VueLoaderPlugin = require('vue-loader/lib/plugin')在下面的plugins中添加 new VueLoaderPlugin(),
+ * 3、extract-text-webpack-plugin还不能支持webpack4.0.0以上的版本。npm install extract-text-webpack-plugin@next
+ * 4、安装插件需要rename时删除package-lock
+ * 
+ */
+
+一、使用script引入vue.js文件
+加载存在依赖Vue的本地js如何处理Vue is not defined问题
+1.加载的js要在加载vue.js之后，所以先引入vue.js后引入本地js
+2.修改webpack.base.js配置文件，添加 externals选项
+externals:{
+"vue": "Vue",
+"vue-router": "VueRouter"}
+externals配置就是为了使import vue from 'vue'这句代码，在本身不引入vue的情况下，能够在各个环境都能解释执行。
+
+
+二、多个后端开发跨域代理配置，
+关于跨域
+后端做跨域处理前端就不需要做代理
+后端没有跨域处理：
+前端开发环境用proxyTable做代理
+生产环境用tomcat或negix做代理
+多个后端提供的接口有相同开头，如何设置前端代理；不可能为每个api都设置本地代理
+    比如：
+    a写的接口
+    urla/s/v1/api/api10
+    urla/s/v1/api/api11
+    urla/s/v1/api/api12
+    b写的接口
+    urlb/s/v1/api/api25
+    urlb/s/v1/api/api26
+    urlb /s/v1/api/api27
+可以通过配置proxyTable的pathRewrite实现：比如访问b写的接口的时候url使用useb，配置b的服务后重写地址到urlb/s/…
+proxyTable:{
+'/userb/**': {//代理标识，使用userb开头的才用此代理，/表示跟目录的意思，解析为hostname + port + 请求的地址
+      target: 'urlb', // b的接口域名http://10.21.86.217:19000
+      secure: false,//如果是https接口需要配置这个参数
+      changeOrigin: true,//如果接口跨域需要配置这个参数 
+      pathRewrite:{//pathRewrite参数是重写地址
+	'^userb':'/' //源接口没有userb，重写去掉
+ },
+}
+axios请求中写成:/userb/s/v1/api/api27
+        pathRewrite: {
+        '^/api': '/api'     //这种接口配置出来     http://XX.XX.XX.XX:8083/api/login
+         //'^/api': ''      //这种接口配置出来      http://XX.XX.XX.XX:8083/login
+         //'^/api': '/adc'   //这种接口配置出来      http://XX.XX.XX.XX:8083/adc/login
+        }
+跨域代理proxyTable：
+changeOrigin参数，接收一个布尔值，如果设置为true，那么本地会虚拟一个服务端接收你的请求并代你发送该请求，这样就不会有跨域问题了，当然这只适用于开发环境
+例：请求的源地址：api.xxxx.com/list/1
+代理标识：'/list'//调用接口使用/list开头的才用代理（axios中的url写为/list/1）
+target:api.xxxx.com
+axios中的url写为/list/1
+如果axios中的url写为/client/list/1
+则标识应为/client
+并重写路径去掉client（因为源地址中没有client）
+pathRewrite: {  
+            '^/client': ''   //本身的接口地址没有 '/client' 这种通用前缀，所以要rewrite去掉 
+        }
+由于 '/'表示的是根目录的意思，所以会解析为hostname + port + 请求的地址
+
+三、配置本地web服务devServer
+Host:"0.0.0.0"
+
+五关于服务地址
+使用静态配置文件设置开发环境和生产环境，可以手动更改
+静态文件配置
+var setting = (function () {
+    var config = {};
+    config.host = 'localhost.huawei.com';
+    config.port = 8080;
+    config.base_web = 'http://' + config.host + ':' + config.port;
+    config.workFlowUrl = 'http://10.21.86.217:19000'//流程引擎
+    config.commonServiceUrl = 'http://10.21.86.217:18000';//公共服务
+    config.servicePublishUrl = 'http://10.21.86.217:10000';//服务发布
+    try {
+        process.setting = config;
+    } catch (error) {
+        top.setting = config;
+    }
+    return config;
+})();
+
+配置文件引用
+<script type="text/javascript" charset="utf-8" src="./static/addConfig.js" ></script>或者
+<script>
+        document.write('<script type="text/javascript" charset="utf-8" src="/dist/static/addConfig.js?v=' + Math.random() + '"><\/script>'); 
+</script>
+
+

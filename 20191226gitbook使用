@@ -1,0 +1,129 @@
+
+
+
+
+Gitbook
+
+gitbook
+npm gitbook-cli -g
+
+
+book.json配置文件信息
+SUMMARY.md目录文件
+gitbook init 根据summary.md初始化文档目录
+gitbook install 安装插件
+gitbook serve 发布工程
+GitBook build ，编译工程
+gitbook serve --port 2333
+gitbook build [书籍路径] [输出路径]
+gitbook pdf ./ ./mybook.pdf
+gitbook epub ./ ./mybook.epub
+gitbook mobi ./ ./mybook.mobi
+
+
+配置文件
+title - 标题
+author - 作者信息
+description - 书本描述
+language - 使用的语言
+gitbook - 指定gitbook版本
+root - 指定存放 GitBook 文件的根目录
+links - 在侧边栏添加链接
+styles - 自定义样式
+plugins - 插件
+pluginsConfig - 插件配置
+structure - 设置 Readme, Summary, Glossary等对应的文件
+
+编辑md文件
+Typora 
+
+可以只要一个SUMMARY.md和一些文档md就可以直接在线查看
+* [前言](README.md)
+  * [Algorithm](Algorithm/algorithm-ch.md)
+  * [Browser](Browser/browser-ch.md)
+  * [Career](Career/How-to-use-your-time-correctly.md)
+  * [DataStruct](DataStruct/dataStruct-zh.md)
+  * [Framerwork](Framerwork/framework-zh.md)
+  * [Git](Git/git-zh.md)
+  * [JS](JS/JS-ch.md)
+  * [Network](Network/Network-zh.md)
+  * [Performance](Performance/performance-ch.md)
+  * [Safety](Safety/safety-cn.md)
+
+
+MD基础语法
+
+# 一级标题 #
+###### 六级标题 ######
+* MD基础语法
+* 标题：在文字前写#，文字与#之间有一个空格，最多支持6级标题
+* 基本符号：* - +. >
+* 段落: 段落的前后要有空行，所谓的空行是指没有文字内容。
+* 换行：
+    * 直接回车是不会换行
+    * 两个及两个以上空格+回车都可以换行，而且效果没有任何区别  
+    * 换行后，也可以在需要换行的地方，加入`<br>`<br>
+* `高亮` 使用一对反引号
+- d无序列表
+    - e无序列表使用星号、加号或是减号（*  +   -）作为列表标记
+- t无序列表
+1. abcd有序列表
+    1. abcde有序列表嵌套
+    2. abcde有序列表嵌套
+2. bcde有序列表
+* 引用 使用\>
+> 一级引用(缩进)
+>> 二级引用嵌套
+* 连接：
+    * 链接的文字放在[]中，链接地址放在随后的()中，链接也可以带title属性，链接地址后面空一格，然后用引号引起来
+        * [简书](https://www.jianshu.com "创作你的创作")
+        * 行内式 `[文本](地址 title)`
+        * 参考式 
+        ``` 这一行注释不会被解析
+        [文本][id] 
+        [id]: 地址 title 
+         ```
+* 图片:
+    * 图片的名字放在[]中，图片地址放在随后的()中，title属性（图片地址后面空一格，然后用引号引起来）,注意的是[]前要加上!
+    * 图片同样有行内式和参考式
+        * ![my-logo.png](../../content/big.png "my-logo")
+* 分割线：
+    * 分割线可以由* - _（星号，减号，底线）这3个符号的至少3个符号表示，注意至少要3个，且不需要连续，有空格也可以
+        * ---
+        * - - -
+        * __ __ _
+* 强调字体
+    * 一个星号或者是一个下划线包起来，会转换为<em>倾斜，如果是2个，会转换为<strong>加粗
+        * *倾斜字体*  **加粗字体**  ***三个星号***
+        * _倾斜字体_  __加粗字体__
+* 转义
+    * 基本上和js转义一样,\加需要转义的字符
+    * \\反斜线\`反引号\*星号\_底线\{}花括号\[]方括号\()括弧\#井字号\+加号\-减号\.英文句点\!惊叹号
+
+* 删除线
+    * 用~~把需要显示删除线的字符包裹起来
+        * ~~删除~~
+
+* 表格
+    * 分割线后面的冒号表示对齐方式，写在左边表示左对齐，右边为右对齐，两边都写表示居中
+|123|234|345|
+|:-|:-:|-:|
+|abc|bcd|cde|
+|abc|bcd|cde|
+|abc|bcd|cde|
+* 颜色
+    * 颜色表示复杂一点：$\color{颜色}{内容}$
+    * $开头$结尾，第一个{}填颜色，第二个{}填写内容
+    * $\color{red}{talk}$ is red
+* 代码块引用：单行使用一对单反引号，多行使用一对三反引号；也可以代码区块的建立是在每行加上4个空格或者一个制表符，需要和普通段落之间存在空行
+`<p>代码块</p>`
+```html 这里写注释或者备注代码类型用于语法高亮（html/Java/javascript/c/cpp/Bash）
+    <div>
+        <p>p标签</p>
+    </div>
+```
+* 使用Html补充MD
+<p>下面是一个图片<br />
+<img src="../../content/big.png" alt="图片说明" />  
+</p>
+
